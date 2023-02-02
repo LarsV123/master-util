@@ -1,0 +1,6 @@
+# Secrets and user configuration
+.env
+
+# Local project files
+__pycache__
+venv
