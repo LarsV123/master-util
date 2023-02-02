@@ -6,7 +6,7 @@ Prerequisites:
 
 ```bash
 # Run setup script to install dependencies and test CLI
-bash setup.sh
+bash scripts/setup.sh
 ```
 
 # Development
@@ -18,6 +18,8 @@ black . && flake8 . && mypy .
 ```
 
 These should not produce any errors.
+
+It is recommended to create a git precommit hook to run these commands before pushing changes to the repository. To do this, copy the file `scripts/pre-push` to `.git/hooks/pre-push`.
 
 # Usage
 
