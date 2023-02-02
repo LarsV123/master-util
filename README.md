@@ -7,6 +7,9 @@ Prerequisites:
 ```bash
 # Run setup script to install dependencies and test CLI
 bash scripts/setup.sh
+
+# Initialize migrations table
+python src/migrate.py init
 ```
 
 # Development
@@ -24,6 +27,16 @@ It is recommended to create a git precommit hook to run these commands before pu
 # Usage
 
 ```bash
-# Alias the start script for convenience
+# Create aliases for the CLI tools for convenience
 alias cli="python src/cli.py"
+alias migrate="python src/migrate.py"
+
+# Test the CLI
+cli --help
+cli -v test
+
+# Run migrations
+migrate --help
+migrate make
+migrate up
 ```

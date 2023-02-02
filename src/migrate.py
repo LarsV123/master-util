@@ -46,7 +46,7 @@ def init():
     conn.cursor.execute(statement)
     conn.connection.commit()
     conn.close()
-    log.info("Successfully created migrations table")
+    log.info("Migrations table is initialized.")
 
 
 def slugify(value, allow_unicode=False):
