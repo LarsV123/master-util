@@ -109,9 +109,7 @@ def make(description: str):
 
         f.write(s)
     log.info(f"Successfully created migration file: {path}")
-    log.info(
-        f"Add your migration code to the file and run 'migrate.py up' to apply it."
-    )
+    log.info("Add your migration code to the file and run 'migrate.py up' to apply it.")
 
 
 @cli.command()
