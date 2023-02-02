@@ -25,6 +25,7 @@ def test():
     log.error("This is an error")
     conn = Connector()
     conn.close()
+    log.info("Successfully connected to database.")
 
 
 if __name__ == "__main__":
