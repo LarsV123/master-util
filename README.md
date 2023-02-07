@@ -10,6 +10,9 @@ bash scripts/setup.sh
 
 # Initialize migrations table
 python src/migrate.py init
+
+# Download source data used for testing
+git clone git@github.com:umpirsky/country-list.git data/country-list
 ```
 
 # Development
