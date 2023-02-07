@@ -82,6 +82,11 @@ def slugify(value, allow_unicode=False):
     help="Description of migration, e.g. 'Add examples table'.",
 )
 def make(description: str):
+    """Create a new migration file from the CLI."""
+    make_migration(description=description)
+
+
+def make_migration(description: str, sql=None):
     """Create a new migration file."""
 
     log.debug("Creating new migration file...")
@@ -96,7 +101,7 @@ def make(description: str):
 
     BEGIN;
 
-    -- TODO: Write migration code here
+    {sql if sql is not None else "-- TODO: Write migration code here"}
 
     COMMIT;
     """
