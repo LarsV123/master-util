@@ -160,15 +160,21 @@ def up():
 
         log.info(f"Applying migration: {migration}")
         path = os.path.join(migrations_folder, migration)
-        conn.execute_script(path)
-        applied_migration_count += 1
+        try:
+            conn.execute_script(path)
+            applied_migration_count += 1
 
-        # Update the migrations table
-        conn.cursor.execute(
-            f"INSERT INTO {TABLE} (filename, applied_at) VALUES (%s, %s);",
-            (migration, datetime.now()),
-        )
-        conn.connection.commit()
+            # Update the migrations table
+            conn.cursor.execute(
+                f"INSERT INTO {TABLE} (filename, applied_at) VALUES (%s, %s);",
+                (migration, datetime.now()),
+            )
+            conn.connection.commit()
+        except Exception as e:
+            log.error(f"Error applying migration: {migration}")
+            log.error(e)
+            break
+    conn.close()
 
     log.info(f"New migrations applied: {applied_migration_count}")
     log.info(f"Total migrations applied: {total_migration_count}")

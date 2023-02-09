@@ -36,23 +36,22 @@ class Connector:
         log.debug(f"Database name: '{database_name}'")
 
     def execute_script(self, filename):
+        log.debug(f"Executing script {filename}...")
         # Open and read the file as a single buffer
         file = open(filename, "r", encoding="utf-8")
 
-        # Read lines and strip line breaks
-        lines = [x.strip().replace("\n", "") for x in file.read().split(";")]
-
-        # Remove empty lines
-        sql = [x for x in lines if x]
+        # Remove comments and split into separate commands
+        sql = [x for x in file.read().split(";") if not x.startswith("--")]
         file.close()
 
         # Execute every command from the input file
         for command in sql:
+            log.debug(f"Executing command: {command}")
             try:
                 self.cursor.execute(command)
             except Exception as e:
-                log.error("Command skipped: ", command)
                 log.error(e)
+                raise e
 
     def close(self):
         self.cursor.close()
