@@ -7,9 +7,21 @@ import re
 from datetime import datetime
 from utils.custom_logger import log
 from db import Connector
+from pathlib import Path
 
-FOLDER = "migrations"
 TABLE = "migrations"
+
+
+def get_migration_folder():
+    """Get the full path to the migrations folder."""
+    root = Path(__file__).parent.parent
+    migrations_folder = os.path.join(root, "migrations")
+
+    if not os.path.exists(migrations_folder):
+        log.error(f"Could not find migrations folder at {migrations_folder}")
+        raise Exception(f"Migrations folder does not exist: {migrations_folder}")
+
+    return migrations_folder
 
 
 @click.group()
@@ -28,11 +40,11 @@ def cli(verbose: bool, quiet: bool):
 @cli.command()
 def init():
     """Set up migrations table."""
-    log.info("Initializing database...")
+    log.debug("Initializing database...")
     conn = Connector()
 
-    if not os.path.exists(FOLDER):
-        raise Exception(f"Migrations folder does not exist: {FOLDER}")
+    migrations_folder = get_migration_folder()
+    log.debug(f"Migrations folder is {migrations_folder}")
 
     # Create migrations table
     statement = f"""
@@ -46,7 +58,9 @@ def init():
     conn.cursor.execute(statement)
     conn.connection.commit()
     conn.close()
-    log.info("Migrations table is initialized.")
+    log.debug("Migrations table is initialized.")
+
+    log.info("Migration system is ready to use.")
 
 
 def slugify(value, allow_unicode=False):
@@ -105,14 +119,15 @@ def make_migration(description: str, sql=None):
 
     COMMIT;
     """
+    # Clean up identation and remove leading whitespace
+    output = inspect.cleandoc(template)
 
-    # Create file in migrations folder
-    path = os.path.join(FOLDER, filename)
+    # Create new migration file in migrations folder
+    migrations_folder = get_migration_folder()
+    path = os.path.join(migrations_folder, filename)
     with open(path, "w") as f:
-        # Clean up identation and remove leading whitespace
-        s = inspect.cleandoc(template)
+        f.write(output)
 
-        f.write(s)
     log.info(f"Successfully created migration file: {path}")
     log.info("Add your migration code to the file and run 'migrate.py up' to apply it.")
 
@@ -121,7 +136,8 @@ def make_migration(description: str, sql=None):
 def up():
     """Run all migrations."""
     # Find all .sql files in the migration folder
-    migrations = [m for m in os.listdir(FOLDER) if m.endswith(".sql")]
+    migrations_folder = get_migration_folder()
+    migrations = [m for m in os.listdir(migrations_folder) if m.endswith(".sql")]
 
     total_migration_count = len(migrations)
     applied_migration_count = 0
@@ -143,7 +159,7 @@ def up():
             continue
 
         log.info(f"Applying migration: {migration}")
-        path = os.path.join(FOLDER, migration)
+        path = os.path.join(migrations_folder, migration)
         conn.execute_script(path)
         applied_migration_count += 1
 
