@@ -15,6 +15,19 @@ python src/migrate.py init
 git clone git@github.com:umpirsky/country-list.git data/country-list
 ```
 
+## MySQL
+
+This project is intended to be used with a MySQL database server.
+
+Run MySQL server:
+
+```bash
+./runtime_output_directory/mysqld --datadir=../data
+
+# Install MySQL client (this is for Ubuntu, but it should be similar for other distros)
+sudo apt install mysql-shell
+```
+
 # Development
 
 Run these commands to check formatting, linting and types before committing:
@@ -42,4 +55,11 @@ cli -v test
 migrate --help
 migrate make
 migrate up
+
+# Insert test data
+cli init
+
+# Set up and run a quick test
+cli setup1
+cli test1
 ```
