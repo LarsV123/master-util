@@ -102,9 +102,8 @@ def create_temp_test_table():
     log.info(f"Created table {table_name}")
 
     tuples = get_locale_data("no_NO")
-    log.info(
-        f"Inserting {len(tuples)} unique values into {table_name}, with {duplicates} duplicates of each..."
-    )
+    log.info(f"Inserting {len(tuples)} unique values into {table_name}")
+    log.info(f"Each value is duplicated {duplicates} times by adding a suffix")
 
     insert = f"INSERT INTO {table_name} (id, value) VALUES (%s, %s);"
     for i in tqdm(range(1, duplicates)):

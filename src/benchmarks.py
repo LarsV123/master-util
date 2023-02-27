@@ -30,7 +30,12 @@ def pre_check(db: Connector):
 
 def icu_order_by(db: Connector):
     """Benchmark using our custom collation, utf8mb4_nb_icu_ai_ci."""
-    query = "SELECT * FROM my_project.test1_no_NO ORDER BY value COLLATE utf8mb4_nb_icu_ai_ci DESC LIMIT 1;"
+    query = """
+    SELECT * FROM my_project.test1_no_NO
+    ORDER BY value COLLATE utf8mb4_nb_icu_ai_ci
+    DESC LIMIT 1;
+    """
+
     log.info("Test: order_by_utf8mb4_nb_icu_ai_ci")
     log.info(f"{query=} | {repetitions=}")
 
@@ -47,7 +52,11 @@ def icu_order_by(db: Connector):
 
 def icu_equals(db: Connector):
     """Benchmark using our custom collation, utf8mb4_nb_icu_ai_ci."""
-    query = "SELECT * FROM my_project.test1_no_NO WHERE value = 'Norge123' COLLATE utf8mb4_nb_icu_ai_ci;"
+    query = """
+    SELECT * FROM my_project.test1_no_NO
+    WHERE value = 'Norge123' COLLATE utf8mb4_nb_icu_ai_ci;
+    """
+
     log.info("Test: equals_utf8mb4_nb_icu_ai_ci")
     log.info(f"{query=} | {repetitions=}")
 
@@ -64,8 +73,13 @@ def icu_equals(db: Connector):
 
 def mysql_order_by(db: Connector):
     """Benchmark using the MySQL collation utf8mb4_nb_0900_ai_ci."""
-    query = "SELECT * FROM my_project.test1_no_NO ORDER BY value COLLATE utf8mb4_nb_0900_ai_ci DESC LIMIT 1;"
-    log.info(f"Test: order_by_utf8mb4_nb_0900_ai_ci")
+    query = """
+    SELECT * FROM my_project.test1_no_NO
+    ORDER BY value COLLATE utf8mb4_nb_0900_ai_ci
+    DESC LIMIT 1;
+    """
+
+    log.info("Test: order_by_utf8mb4_nb_0900_ai_ci")
     log.info(f"{query=} | {repetitions=}")
 
     @time_this
@@ -81,8 +95,12 @@ def mysql_order_by(db: Connector):
 
 def mysql_equals(db: Connector):
     """Benchmark using the MySQL collation utf8mb4_nb_0900_ai_ci."""
-    query = "SELECT * FROM my_project.test1_no_NO WHERE value = 'Norge123' COLLATE utf8mb4_nb_0900_ai_ci;"
-    log.info(f"Test: equals_utf8mb4_nb_0900_ai_ci")
+    query = """
+    SELECT * FROM my_project.test1_no_NO
+    WHERE value = 'Norge123' COLLATE utf8mb4_nb_0900_ai_ci;
+    """
+
+    log.info("Test: equals_utf8mb4_nb_0900_ai_ci")
     log.info(f"{query=} | {repetitions=}")
 
     @time_this
