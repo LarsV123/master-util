@@ -26,6 +26,26 @@ def time_this(f):
     return decorator
 
 
+def get_runtime(f):
+    """
+    Simple decorator for timing a function.
+    Returns the total runtime after the function is done, in seconds (instead
+    of the actual return value of the decorated function).
+    """
+
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        start = perf_counter()
+        f(*args, **kwargs)
+        end = perf_counter()
+        elapsed = round(end - start, 3)
+
+        log.debug(f"Run time for {f.__name__}: {elapsed} seconds")
+        return elapsed
+
+    return decorator
+
+
 def profile_this(f=None, *, verbose=True, output_path="results.prof"):
     """
     Simple decorator for profiling a function.

@@ -1,23 +1,55 @@
+import locale
 from db import Connector
 from utils.custom_logger import log
-from utils.profile import time_this
-import locale
+from utils.profile import get_runtime
+from tabulate import tabulate
+from tqdm import tqdm
 
 # This is used to format numbers with thousands separators (e.g. 123 456 780).
 locale.setlocale(locale.LC_ALL, "")
 
-repetitions = 2
 
-
-def sanity_test():
-    """Run a simple benchmark comparing the two approaches."""
+def performance_benchmark():
+    """Run a performance benchmark comparing different collations."""
     conn = Connector()
     pre_check(conn)
-    icu_order_by(conn)
-    mysql_order_by(conn)
-    icu_equals(conn)
-    mysql_equals(conn)
+
+    loops = 3
+    table = "test1_no_NO"
+    collations = [
+        "utf8mb4_nb_icu_ai_ci",
+        "utf8mb4_nb_0900_ai_ci",
+        "utf8mb4_us_icu_ai_ci",
+        "utf8mb4_0900_ai_ci",
+    ]
+
+    results = []
+    pbar = tqdm(collations)
+
+    for collation in pbar:
+        tqdm.write(f"Testing collation: {collation}")
+        result = {"collation": collation}
+
+        pbar.set_description("order_by_asc")
+        result["order_by_asc"] = benchmark_order_by(
+            conn, table, collation, repetitions=loops, ascending=True
+        )
+
+        pbar.set_description("order_by_desc")
+        result["order_by_desc"] = benchmark_order_by(
+            conn, table, collation, repetitions=loops, ascending=False
+        )
+
+        pbar.set_description("equals")
+        result["equals"] = benchmark_equals(conn, table, collation, repetitions=loops)
+
+        tqdm.write(f"Done testing {collation}")
+        results.append(result)
+
+    pbar.close()
     conn.close()
+    print("*" * 80)
+    print(tabulate(results, headers="keys", tablefmt="mysql"))
 
 
 def pre_check(db: Connector):
@@ -28,87 +60,41 @@ def pre_check(db: Connector):
     log.info(f"Table test1_no_NO has {count:n} rows. {min_value=}, {max_value=}")
 
 
-def icu_order_by(db: Connector):
-    """Benchmark using our custom collation, utf8mb4_nb_icu_ai_ci."""
-    query = """
-    SELECT * FROM my_project.test1_no_NO
-    ORDER BY value COLLATE utf8mb4_nb_icu_ai_ci
-    DESC LIMIT 1;
+def benchmark_order_by(
+    db: Connector, table: str, collation: str, repetitions=2, ascending=False
+):
+    direction = "ASC" if ascending else "DESC"
+    query = f"""
+    SELECT * FROM my_project.{table}
+    ORDER BY value COLLATE {collation}
+    {direction} LIMIT 1;
     """
+    log.debug(f"{query=}")
+    log.debug(f"{repetitions=} | {ascending=}")
 
-    log.info("Test: order_by_utf8mb4_nb_icu_ai_ci")
-    log.info(f"{query=} | {repetitions=}")
-
-    @time_this
-    def order_by_utf8mb4_nb_icu_ai_ci():
+    @get_runtime
+    def timed_order_by():
         for _ in range(repetitions):
             db.cursor.execute(query)
             result = db.cursor.fetchall()
         return result
 
-    result = order_by_utf8mb4_nb_icu_ai_ci()
-    log.info(f"Result: {result}")
+    return timed_order_by()
 
 
-def icu_equals(db: Connector):
-    """Benchmark using our custom collation, utf8mb4_nb_icu_ai_ci."""
-    query = """
-    SELECT * FROM my_project.test1_no_NO
-    WHERE value = 'Norge123' COLLATE utf8mb4_nb_icu_ai_ci;
+def benchmark_equals(db: Connector, table: str, collation: str, repetitions=2):
+    query = f"""
+    SELECT * FROM my_project.{table}
+    WHERE value = 'Norge123' COLLATE {collation};
     """
+    log.debug(f"{query=}")
+    log.debug(f"{repetitions=}")
 
-    log.info("Test: equals_utf8mb4_nb_icu_ai_ci")
-    log.info(f"{query=} | {repetitions=}")
-
-    @time_this
-    def equals_utf8mb4_nb_icu_ai_ci():
+    @get_runtime
+    def timed_equals():
         for _ in range(repetitions):
             db.cursor.execute(query)
             result = db.cursor.fetchall()
         return result
 
-    result = equals_utf8mb4_nb_icu_ai_ci()
-    log.info(f"Result: {result}")
-
-
-def mysql_order_by(db: Connector):
-    """Benchmark using the MySQL collation utf8mb4_nb_0900_ai_ci."""
-    query = """
-    SELECT * FROM my_project.test1_no_NO
-    ORDER BY value COLLATE utf8mb4_nb_0900_ai_ci
-    DESC LIMIT 1;
-    """
-
-    log.info("Test: order_by_utf8mb4_nb_0900_ai_ci")
-    log.info(f"{query=} | {repetitions=}")
-
-    @time_this
-    def order_by_utf8mb4_nb_0900_ai_ci():
-        for _ in range(repetitions):
-            db.cursor.execute(query)
-            result = db.cursor.fetchall()
-        return result
-
-    result = order_by_utf8mb4_nb_0900_ai_ci()
-    log.info(f"Result: {result}")
-
-
-def mysql_equals(db: Connector):
-    """Benchmark using the MySQL collation utf8mb4_nb_0900_ai_ci."""
-    query = """
-    SELECT * FROM my_project.test1_no_NO
-    WHERE value = 'Norge123' COLLATE utf8mb4_nb_0900_ai_ci;
-    """
-
-    log.info("Test: equals_utf8mb4_nb_0900_ai_ci")
-    log.info(f"{query=} | {repetitions=}")
-
-    @time_this
-    def equals_utf8mb4_nb_0900_ai_ci():
-        for _ in range(repetitions):
-            db.cursor.execute(query)
-            result = db.cursor.fetchall()
-        return result
-
-    result = equals_utf8mb4_nb_0900_ai_ci()
-    log.info(f"Result: {result}")
+    return timed_equals()

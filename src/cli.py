@@ -3,7 +3,7 @@ import logging
 from utils.custom_logger import log
 from db import Connector
 from test_data_handler import insert_all_locale_data, create_temp_test_table
-from benchmarks import sanity_test
+from benchmarks import performance_benchmark
 
 
 @click.group()
@@ -55,11 +55,8 @@ def setup_perf():
 @cli.command()
 def perf():
     """Run a simplified performance test"""
-    log.info("Running a simplified set of benchmarks...")
-    log.info("This compares performance between:")
-    log.info("utf8mb4_nb_icu_ai_ci (custom ICU collation)")
-    log.info("utf8mb4_nb_0900_ai_ci (MySQL default collation)")
-    sanity_test()
+    log.info("Running a simplified set of performance benchmarks...")
+    performance_benchmark()
 
 
 if __name__ == "__main__":
