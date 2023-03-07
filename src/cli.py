@@ -45,7 +45,7 @@ def init():
 
 
 @cli.command()
-def setup1():
+def setup_perf():
     """Set up synthetic data for a quick test"""
     log.info("Creating synthetic test data...")
     table_name = create_temp_test_table()
@@ -53,9 +53,12 @@ def setup1():
 
 
 @cli.command()
-def test1():
-    """Run a quick test on synthetic data"""
-    log.info("Running a quick benchmark to compare the two collations..")
+def perf():
+    """Run a simplified performance test"""
+    log.info("Running a simplified set of benchmarks...")
+    log.info("This compares performance between:")
+    log.info("utf8mb4_nb_icu_ai_ci (custom ICU collation)")
+    log.info("utf8mb4_nb_0900_ai_ci (MySQL default collation)")
     sanity_test()
 
 
