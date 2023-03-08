@@ -3,7 +3,7 @@ import logging
 from utils.custom_logger import log
 from db import Connector
 from test_data_handler import insert_all_locale_data, create_temp_test_table
-from benchmarks import performance_benchmark
+from benchmarks import performance_benchmark, validity_tests
 
 
 @click.group()
@@ -57,6 +57,13 @@ def perf():
     """Run a simplified performance test"""
     log.info("Running a simplified set of performance benchmarks...")
     performance_benchmark()
+
+
+@cli.command()
+def validate():
+    """Run a simplified validity test"""
+    log.info("Running a simplified set of validity tests...")
+    validity_tests()
 
 
 if __name__ == "__main__":

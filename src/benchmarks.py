@@ -52,6 +52,66 @@ def performance_benchmark():
     print(tabulate(results, headers="keys", tablefmt="mysql"))
 
 
+def validity_tests():
+    """Check that pairs of collations produce the same results."""
+    conn = Connector()
+    pre_check(conn)
+
+    # table = "country_list_en_US"
+    table = "country_list_no_NO"
+    collations = [
+        ("utf8mb4_nb_icu_ai_ci", "utf8mb4_nb_0900_ai_ci"),
+        ("utf8mb4_us_icu_ai_ci", "utf8mb4_0900_ai_ci"),
+        ("utf8mb4_0900_ai_ci", "utf8mb4_nb_0900_ai_ci"),
+        ("utf8mb4_us_icu_ai_ci", "utf8mb4_nb_icu_ai_ci"),
+    ]
+    results = []
+
+    pbar = tqdm(collations)
+    for c1, c2 in pbar:
+        tqdm.write(f"Comparing {c1} and {c2} (ascending)...")
+        result = compare_collations(conn, table, c1, c2)
+        tqdm.write(f"Found {result} differences.")
+        results.append(
+            {
+                "c1": c1,
+                "c2": c2,
+                "differences": result,
+            }
+        )
+
+    pbar.close()
+    conn.close()
+    print("*" * 80)
+    print(tabulate(results, headers="keys", tablefmt="mysql"))
+
+
+def compare_collations(db: Connector, table: str, c1: str, c2: str):
+    """Compare two collations. Return the number of rows that are different."""
+    r1 = get_order_by(db, table, c1, ascending=False)
+    r2 = get_order_by(db, table, c2, ascending=False)
+
+    differences = 0
+    assert len(r1) == len(r2)
+    for i in range(len(r1)):
+        if r1[i] != r2[i]:
+            log.debug(f"Row {i} is different: {r1[i]} != {r2[i]}")
+            differences += 1
+    return differences
+
+
+def get_order_by(db: Connector, table: str, collation: str, ascending: bool):
+    direction = "ASC" if ascending else "DESC"
+    query = f"""
+    -- sql
+    SELECT * FROM my_project.{table}
+    ORDER BY value COLLATE {collation}
+    {direction};
+    """
+    db.cursor.execute(query)
+    return db.cursor.fetchall()
+
+
 def pre_check(db: Connector):
     """Check that the tables exist."""
     query = "SELECT COUNT(*), MIN(VALUE), MAX(value) FROM my_project.test1_no_NO;"
@@ -61,10 +121,11 @@ def pre_check(db: Connector):
 
 
 def benchmark_order_by(
-    db: Connector, table: str, collation: str, repetitions=2, ascending=False
+    db: Connector, table: str, collation: str, repetitions: int, ascending: bool
 ):
     direction = "ASC" if ascending else "DESC"
     query = f"""
+    -- sql
     SELECT * FROM my_project.{table}
     ORDER BY value COLLATE {collation}
     {direction} LIMIT 1;
