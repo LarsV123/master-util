@@ -11,13 +11,13 @@ locale.setlocale(locale.LC_ALL, "")
 
 # Pairs of collations which should be equivalent
 COLLATIONS = [
-    ("utf8mb4_nb_icu_ai_ci", "utf8mb4_nb_0900_ai_ci"),
-    ("utf8mb4_us_icu_ai_ci", "utf8mb4_0900_ai_ci"),
-    ("utf8mb4_us_icu_as_cs", "utf8mb4_0900_as_cs"),
-    ("utf8mb4_fr_icu_ai_ci", "utf8mb4_0900_ai_ci"),
-    ("utf8mb4_zh_icu_0900_as_cs", "utf8mb4_zh_0900_as_cs"),
-    ("utf8mb4_ja_icu_0900_as_cs", "utf8mb4_ja_0900_as_cs"),
-    ("utf8mb4_ja_icu_0900_as_cs_ks", "utf8mb4_ja_0900_as_cs_ks"),
+    ("utf8mb4_icu_nb_NO_ai_ci", "utf8mb4_nb_0900_ai_ci"),
+    ("utf8mb4_icu_en_US_ai_ci", "utf8mb4_0900_ai_ci"),
+    ("utf8mb4_icu_en_US_as_cs", "utf8mb4_0900_as_cs"),
+    ("utf8mb4_icu_fr_FR_ai_ci", "utf8mb4_0900_ai_ci"),
+    ("utf8mb4_icu_zh_Hans_as_cs", "utf8mb4_zh_0900_as_cs"),
+    ("utf8mb4_icu_ja_JP_as_cs", "utf8mb4_ja_0900_as_cs"),
+    ("utf8mb4_icu_ja_JP_as_cs_ks", "utf8mb4_ja_0900_as_cs_ks"),
 ]
 
 
