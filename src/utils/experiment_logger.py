@@ -1,6 +1,6 @@
 """
 Utility for logging experiment results to an SQLite database.
-SQLite is used for logging instead of the running MySQL server, 
+SQLite is used for logging instead of the running MySQL server,
 to avoid conflict with running benchmarks.
 """
 import sqlite3
@@ -29,7 +29,7 @@ def init():
     """
     Create a table which holds the results of testing a single collation once
     """
-    statement = f"""
+    statement = """
     -- sql
     CREATE TABLE IF NOT EXISTS benchmarks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +49,7 @@ def init():
 def log_benchmark(result: dict):
     """Log an experiment result to the database."""
     db = sqlite3.connect(DATABASE_FILE)
-    statement = f"""
+    statement = """
     -- sql
     INSERT INTO benchmarks (collation, data_table, order_by_asc, order_by_desc, equals)
     VALUES (:collation, :data_table, :order_by_asc, :order_by_desc, :equals);
@@ -62,12 +62,20 @@ def log_benchmark(result: dict):
 def get_results():
     """Report on experiment results."""
     db = sqlite3.connect(DATABASE_FILE)
-    query = f"""
+    query = """
     -- sql
-    SELECT collation, data_table, ROUND(AVG(order_by_asc), 3), ROUND(AVG(order_by_desc), 3), ROUND(AVG(equals), 3), COUNT(*) AS count
-    FROM benchmarks
-    GROUP BY collation, data_table
-    ;
+    SELECT
+        collation,
+        data_table,
+        ROUND(AVG(order_by_asc), 3),
+        ROUND(AVG(order_by_desc), 3),
+        ROUND(AVG(equals), 3),
+        COUNT(*) AS count
+    FROM
+        benchmarks
+    GROUP BY
+        collation,
+        data_table;
     """
     return db.execute(query).fetchall()
 
