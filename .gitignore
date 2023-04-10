@@ -4,6 +4,7 @@
 # Local project files
 __pycache__
 venv
+*.db
 
 # Third-party libraries
 data/country-list
