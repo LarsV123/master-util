@@ -3,7 +3,7 @@ import logging
 from utils.custom_logger import log
 from db import Connector
 from test_data_handler import insert_all_locale_data, create_temp_test_table
-from benchmarks import performance_benchmark, validity_tests
+from benchmarks import performance_benchmark, validity_tests, report_results
 
 
 @click.group()
@@ -53,10 +53,16 @@ def setup_perf():
 
 
 @cli.command()
-def perf():
+@click.option("-i", "--iterations", default=3, help="Number of times to run the test.")
+def perf(iterations: int):
     """Run a simplified performance test"""
     log.info("Running a simplified set of performance benchmarks...")
-    performance_benchmark()
+    performance_benchmark(iterations)
+
+
+@cli.command()
+def report():
+    report_results()
 
 
 @cli.command()

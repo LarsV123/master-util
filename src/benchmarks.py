@@ -21,55 +21,91 @@ COLLATIONS = [
 ]
 
 
-def performance_benchmark():
+def performance_benchmark(iterations: int):
     """Run a performance benchmark comparing different collations."""
     conn = Connector()
     pre_check(conn)
 
-    loops = 3
     table = "test1_no_NO"
-
-    # Find all collations to test
-    collations = []
-    for c1, c2 in COLLATIONS:
-        collations.append(c1)
-        collations.append(c2)
-    collations = list(set(collations))  # Remove duplicates, keep order
 
     steps = len(COLLATIONS) * 3 * 2
     pbar = tqdm(steps)
 
     experiment_logger.init()
 
-    for _ in range(loops):
-        for collation in collations:
-            test_collation(conn, table, collation, pbar)
+    for _ in range(iterations):
+        # We only need to test each collation once per loop
+        # (some collations are equivalent to multiple others)
+        tested_collations = []
+
+        for c1, c2 in COLLATIONS:
+            if c1 not in tested_collations:
+                tested_collations.append(c1)
+                test_collation(conn, table, c1, c2, pbar)
+            if c2 not in tested_collations:
+                tested_collations.append(c2)
+                test_collation(conn, table, c2, c1, pbar)
 
     pbar.close()
     conn.close()
+    report_results()
+
+
+def report_results():
+    """Print the results of the performance benchmark."""
+    print("All results (aggregated):")
     print("*" * 80)
-    results = experiment_logger.get_results()
     print(
         tabulate(
-            results,
+            experiment_logger.get_results(),
             headers=[
                 "Collation",
-                "Table",
-                "Avg. order_by_asc",
-                "Avg. order_by_desc",
-                "Avg. equals",
+                "Equivalent",
+                "Data",
+                "Order by (ASC)",
+                "Order by (DESC)",
+                "Equals",
                 "Iterations",
             ],
             tablefmt="mysql",
         )
     )
+    print("*" * 80)
+
+    print("Relative slowdown (ICU vs MySQL):")
+    print("*" * 80)
+    print(
+        tabulate(
+            experiment_logger.get_comparison(),
+            headers=[
+                "Collation",
+                "Equivalent",
+                "Data",
+                "ASC slowdown (%)",
+                "DESC slowdown (%)",
+                "Equals slowdown (%)",
+            ],
+            tablefmt="mysql",
+        )
+    )
+    print("*" * 80)
 
 
-def test_collation(conn: Connector, table: str, collation: str, pbar: tqdm):
+def test_collation(
+    conn: Connector,
+    table: str,
+    collation: str,
+    equivalent_collation: str,
+    pbar: tqdm,
+):
     """Run all performance benchmarks for a given collation."""
     log.debug(f"Testing collation: {collation}")
     tqdm.write(f"Testing collation: {collation}")
-    result = {"collation": collation, "data_table": table}
+    result = {
+        "collation": collation,
+        "equivalent_collation": equivalent_collation,
+        "data_table": table,
+    }
 
     pbar.set_description("order_by_asc")
     result["order_by_asc"] = benchmark_order_by(conn, table, collation, ascending=True)
