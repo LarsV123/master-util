@@ -6,7 +6,7 @@ from db import Connector
 from utils.custom_logger import log
 from tqdm import tqdm
 
-locales = ["en_US", "th_TH", "zh_Hans", "uk_UA", "fr_FR", "no_NO", "ja_JP"]
+locales = ["en_US", "zh_Hans", "fr_FR", "no_NO", "ja_JP"]
 
 
 def create_locale_table(locale: str):
@@ -75,14 +75,30 @@ def insert_all_locale_data():
         insert_locale_data(locale)
 
 
-def create_temp_test_table():
+def create_test_tables():
+    """Create tables required for performance testing."""
+    sizes = [100000, 1000000, 10000000]
+    for locale in locales:
+        for size in sizes:
+            create_synthetic_test_table(locale, size)
+
+
+def create_synthetic_test_table(locale: str, min_size: int):
     """
-    Create a table of synthetic data for testing purposes.
-    Use Norwegian data as input, and use numeric suffixes to expand the data set.
+    Create a table of test data for benchmarking.
+    Use the country list data for the given locale as a
+    base, then expand it synthetically to the given size.
     """
+    base_data = get_locale_data(locale)
+    duplicates = (min_size // len(base_data)) + 1
+    log.info(f"Creating test data for locale {locale}")
+    log.debug(f"Base data has {len(base_data)} rows")
+    log.debug(f"Minimum number of records: {min_size}")
+    log.debug(f"Duplicates required: {duplicates} times")
+    log.debug(f"Total rows to create: {duplicates * len(base_data)}")
+
+    table_name = f"test_{locale}_{min_size}"
     conn = Connector()
-    table_name = "test1_no_NO"
-    duplicates = 1000
 
     # Drop the table and recreate if it already exists
     conn.cursor.execute(f"DROP TABLE IF EXISTS {table_name};")
@@ -94,23 +110,17 @@ def create_temp_test_table():
         id VARCHAR(64) NOT NULL,
         value VARCHAR(64) NOT NULL,
         PRIMARY KEY(id)
-        )
-    COLLATE utf8mb4_nb_icu_ai_ci;
+        );
     """
     conn.cursor.execute(statement)
     conn.connection.commit()
     log.info(f"Created table {table_name}")
 
-    tuples = get_locale_data("no_NO")
-    log.info(f"Inserting {len(tuples)} unique values into {table_name}")
-    log.info(f"Each value is duplicated {duplicates} times by adding a suffix")
-
     insert = f"INSERT INTO {table_name} (id, value) VALUES (%s, %s);"
-    for i in tqdm(range(1, duplicates)):
-        new_tuples = [(row[0] + str(i), row[1] + str(i)) for row in tuples]
+    for i in tqdm(range(duplicates)):
+        new_tuples = [(row[0] + str(i), row[1] + str(i)) for row in base_data]
         conn.cursor.executemany(insert, new_tuples)
     conn.connection.commit()
-    return table_name
 
 
 if __name__ == "__main__":

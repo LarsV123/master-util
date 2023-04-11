@@ -29,7 +29,7 @@ def performance_benchmark(iterations: int):
     table = "test1_no_NO"
 
     steps = len(COLLATIONS) * 3 * 2
-    pbar = tqdm(steps)
+    pbar = tqdm(total=steps)
 
     experiment_logger.init()
 

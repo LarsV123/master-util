@@ -2,7 +2,10 @@ import click
 import logging
 from utils.custom_logger import log
 from db import Connector
-from test_data_handler import insert_all_locale_data, create_temp_test_table
+from test_data_handler import (
+    insert_all_locale_data,
+    create_test_tables,
+)
 from benchmarks import performance_benchmark, validity_tests, report_results
 
 
@@ -48,8 +51,8 @@ def init():
 def setup_perf():
     """Set up synthetic data for a quick test"""
     log.info("Creating synthetic test data...")
-    table_name = create_temp_test_table()
-    log.info(f"Created synthetic test data in table {table_name}")
+    create_test_tables()
+    log.info("Finished creating synthetic test data.")
 
 
 @cli.command()
