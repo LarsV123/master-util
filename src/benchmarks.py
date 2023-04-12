@@ -5,19 +5,74 @@ from utils.profile import get_runtime
 from utils import experiment_logger
 from tabulate import tabulate
 from tqdm import tqdm
+from test_data_handler import DATASET_SIZES
 
 # This is used to format numbers with thousands separators (e.g. 123 456 780).
 locale.setlocale(locale.LC_ALL, "")
 
-# Pairs of collations which should be equivalent
+
+# All combinations of locale and collation we want to test
 COLLATIONS = [
-    ("utf8mb4_icu_nb_NO_ai_ci", "utf8mb4_nb_0900_ai_ci"),
-    ("utf8mb4_icu_en_US_ai_ci", "utf8mb4_0900_ai_ci"),
-    ("utf8mb4_icu_en_US_as_cs", "utf8mb4_0900_as_cs"),
-    ("utf8mb4_icu_fr_FR_ai_ci", "utf8mb4_0900_ai_ci"),
-    ("utf8mb4_icu_zh_Hans_as_cs", "utf8mb4_zh_0900_as_cs"),
-    ("utf8mb4_icu_ja_JP_as_cs", "utf8mb4_ja_0900_as_cs"),
-    ("utf8mb4_icu_ja_JP_as_cs_ks", "utf8mb4_ja_0900_as_cs_ks"),
+    {
+        "icu": "utf8mb4_icu_en_US_ai_ci",
+        "mysql": "utf8mb4_0900_ai_ci",
+        "locale": "en_US",
+    },
+    {
+        "icu": "utf8mb4_icu_en_US_as_cs",
+        "mysql": "utf8mb4_0900_as_cs",
+        "locale": "en_US",
+    },
+    {
+        "icu": "utf8mb4_icu_nb_NO_ai_ci",
+        "mysql": "utf8mb4_nb_0900_ai_ci",
+        "locale": "nb_NO",
+    },
+    {
+        "icu": "utf8mb4_icu_nb_NO_ai_ci",
+        "mysql": "utf8mb4_nb_0900_ai_ci",
+        "locale": "en_US",
+    },
+    {
+        "icu": "utf8mb4_icu_fr_FR_ai_ci",
+        "mysql": "utf8mb4_0900_ai_ci",
+        "locale": "fr_FR",
+    },
+    {
+        "icu": "utf8mb4_icu_fr_FR_ai_ci",
+        "mysql": "utf8mb4_0900_ai_ci",
+        "locale": "en_US",
+    },
+    {
+        "icu": "utf8mb4_icu_zh_Hans_as_cs",
+        "mysql": "utf8mb4_zh_0900_as_cs",
+        "locale": "zh_Hans",
+    },
+    {
+        "icu": "utf8mb4_icu_zh_Hans_as_cs",
+        "mysql": "utf8mb4_zh_0900_as_cs",
+        "locale": "en_US",
+    },
+    {
+        "icu": "utf8mb4_icu_ja_JP_as_cs",
+        "mysql": "utf8mb4_ja_0900_as_cs",
+        "locale": "ja_JP",
+    },
+    {
+        "icu": "utf8mb4_icu_ja_JP_as_cs",
+        "mysql": "utf8mb4_ja_0900_as_cs",
+        "locale": "en_US",
+    },
+    {
+        "icu": "utf8mb4_icu_ja_JP_as_cs_ks",
+        "mysql": "utf8mb4_ja_0900_as_cs_ks",
+        "locale": "ja_JP",
+    },
+    {
+        "icu": "utf8mb4_icu_ja_JP_as_cs_ks",
+        "mysql": "utf8mb4_ja_0900_as_cs_ks",
+        "locale": "en_US",
+    },
 ]
 
 
@@ -25,26 +80,53 @@ def performance_benchmark(iterations: int):
     """Run a performance benchmark comparing different collations."""
     conn = Connector()
     pre_check(conn)
-
-    table = "test1_no_NO"
-
-    steps = len(COLLATIONS) * 3 * 2
-    pbar = tqdm(total=steps)
-
     experiment_logger.init()
 
-    for _ in range(iterations):
-        # We only need to test each collation once per loop
-        # (some collations are equivalent to multiple others)
-        tested_collations = []
+    # Generate all combinations of collations, locales and dataset sizes
+    configurations = []
 
-        for c1, c2 in COLLATIONS:
-            if c1 not in tested_collations:
-                tested_collations.append(c1)
-                test_collation(conn, table, c1, c2, pbar)
-            if c2 not in tested_collations:
-                tested_collations.append(c2)
-                test_collation(conn, table, c2, c1, pbar)
+    # We only need to benchmark each collation once per locale
+    done: dict[str, list[str]] = {collation["locale"]: [] for collation in COLLATIONS}
+
+    for collation in COLLATIONS:
+        locale = collation["locale"]
+        if collation["icu"] not in done[locale]:
+            for size in DATASET_SIZES:
+                configurations.append(
+                    {
+                        "collation": collation["icu"],
+                        "locale": locale,
+                        "data_table": f"test_{locale}_{size}",
+                        "data_size": size,
+                    }
+                )
+            done[locale].append(collation["icu"])
+
+        if collation["mysql"] not in done[locale]:
+            for size in DATASET_SIZES:
+                configurations.append(
+                    {
+                        "collation": collation["mysql"],
+                        "locale": locale,
+                        "data_table": f"test_{locale}_{size}",
+                        "data_size": size,
+                    }
+                )
+            done[locale].append(collation["mysql"])
+
+    tqdm.write("Running performance benchmarks...")
+    tqdm.write(f"Number of configurations: {len(configurations)}")
+    steps = len(configurations) * iterations
+    pbar = tqdm(total=steps)
+    completed = 0
+    for config in configurations:
+        for i in range(iterations):
+            status = f"{config['collation']} ({i+1}/{iterations})"
+            pbar.set_description(status)
+            test_collation(conn, config)
+            pbar.update(1)
+        completed += 1
+        tqdm.write(f"Completed {completed}/{len(configurations)} configurations")
 
     pbar.close()
     conn.close()
@@ -60,8 +142,8 @@ def report_results():
             experiment_logger.get_results(),
             headers=[
                 "Collation",
-                "Equivalent",
-                "Data",
+                "Data set",
+                "Data size",
                 "Order by (ASC)",
                 "Order by (DESC)",
                 "Equals",
@@ -73,14 +155,18 @@ def report_results():
     print("*" * 80)
 
     print("Relative slowdown (ICU vs MySQL):")
+    results = []
+    for config in COLLATIONS:
+        results.extend(experiment_logger.get_comparison(config))
     print("*" * 80)
     print(
         tabulate(
-            experiment_logger.get_comparison(),
+            results,
             headers=[
-                "Collation",
-                "Equivalent",
-                "Data",
+                "ICU collation",
+                "MySQL collation",
+                "Locale",
+                "Data size",
                 "ASC slowdown (%)",
                 "DESC slowdown (%)",
                 "Equals slowdown (%)",
@@ -91,37 +177,25 @@ def report_results():
     print("*" * 80)
 
 
-def test_collation(
-    conn: Connector,
-    table: str,
-    collation: str,
-    equivalent_collation: str,
-    pbar: tqdm,
-):
+def test_collation(conn: Connector, config: dict):
     """Run all performance benchmarks for a given collation."""
-    log.debug(f"Testing collation: {collation}")
-    tqdm.write(f"Testing collation: {collation}")
-    result = {
-        "collation": collation,
-        "equivalent_collation": equivalent_collation,
-        "data_table": table,
-    }
+    log.debug(f"Testing collation: {config['collation']}")
+    result = config
 
-    pbar.set_description("order_by_asc")
-    result["order_by_asc"] = benchmark_order_by(conn, table, collation, ascending=True)
-    pbar.update(1)
-
-    pbar.set_description("order_by_desc")
-    result["order_by_desc"] = benchmark_order_by(
-        conn, table, collation, ascending=False
+    result["order_by_asc"] = benchmark_order_by(
+        conn, config["data_table"], config["collation"], ascending=True
     )
-    pbar.update(1)
 
-    pbar.set_description("equals")
-    result["equals"] = benchmark_equals(conn, table, collation)
-    pbar.update(1)
+    result["order_by_desc"] = benchmark_order_by(
+        conn, config["data_table"], config["collation"], ascending=False
+    )
 
-    tqdm.write(f"Done testing {collation}")
+    result["equals"] = benchmark_equals(
+        conn,
+        config["data_table"],
+        config["collation"],
+    )
+
     experiment_logger.log_benchmark(result)
 
 

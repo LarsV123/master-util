@@ -34,8 +34,9 @@ def init():
     CREATE TABLE IF NOT EXISTS benchmarks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         collation TEXT NOT NULL,
-        equivalent_collation TEXT NOT NULL,
+        locale TEXT NOT NULL,
         data_table TEXT NOT NULL,
+        data_size INTEGER NOT NULL,
         order_by_asc REAL NOT NULL,
         order_by_desc REAL NOT NULL,
         equals REAL NOT NULL,
@@ -55,8 +56,9 @@ def log_benchmark(result: dict):
     INSERT INTO
     benchmarks (
         collation,
-        equivalent_collation,
+        locale,
         data_table,
+        data_size,
         order_by_asc,
         order_by_desc,
         equals
@@ -64,8 +66,9 @@ def log_benchmark(result: dict):
     VALUES
     (
         :collation,
-        :equivalent_collation,
+        :locale,
         :data_table,
+        :data_size,
         :order_by_asc,
         :order_by_desc,
         :equals
@@ -83,8 +86,8 @@ def get_results():
     -- sql
     SELECT
         collation,
-        equivalent_collation,
         data_table,
+        data_size,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -93,13 +96,13 @@ def get_results():
         benchmarks
     GROUP BY
         collation,
-        equivalent_collation,
-        data_table;
+        data_table,
+        data_size;
     """
     return db.execute(query).fetchall()
 
 
-def get_comparison():
+def get_comparison(config: dict):
     """
     Report on experiment results for ICU collations, showing relative
     slowdown compared to equivalent MySQL collations.
@@ -110,8 +113,8 @@ def get_comparison():
     WITH cte AS (
     SELECT
         collation,
-        equivalent_collation,
-        data_table,
+        locale,
+        data_size,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -120,13 +123,14 @@ def get_comparison():
         benchmarks
     GROUP BY
         collation,
-        equivalent_collation,
-        data_table
+        locale,
+        data_size
     )
     SELECT
-        cte1.collation,
-        cte1.equivalent_collation,
-        cte1.data_table,
+        cte1.collation AS icu,
+        cte2.collation AS mysql,
+        cte1.locale,
+        cte1.data_size,
         ROUND(
             100.0 * (cte1.order_by_asc - cte2.order_by_asc) / cte2.order_by_asc,
             2
@@ -141,15 +145,17 @@ def get_comparison():
         ) AS equals_slowdown
     FROM
         cte AS cte1
-    JOIN cte AS cte2 ON cte1.collation = cte2.equivalent_collation
-    AND cte1.data_table = cte2.data_table
-    WHERE
-        cte1.collation LIKE '%icu%'
+    JOIN cte AS cte2 ON cte1.locale = cte2.locale
+    WHERE 1
+        AND cte1.collation = :icu
+        AND cte2.collation = :mysql
+        AND cte1.locale = :locale
+        AND cte1.data_size = cte2.data_size
     ORDER BY
-        cte1.collation,
-        cte1.data_table;
+        cte1.locale,
+        cte1.data_size;
     """
-    return db.execute(query).fetchall()
+    return db.execute(query, config).fetchall()
 
 
 if __name__ == "__main__":

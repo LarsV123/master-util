@@ -6,7 +6,8 @@ from db import Connector
 from utils.custom_logger import log
 from tqdm import tqdm
 
-locales = ["en_US", "zh_Hans", "fr_FR", "no_NO", "ja_JP"]
+LOCALES = ["en_US", "zh_Hans", "fr_FR", "nb_NO", "ja_JP"]
+DATASET_SIZES = [100000, 1000000, 10000000]
 
 
 def create_locale_table(locale: str):
@@ -29,7 +30,7 @@ def create_locale_tables_migration():
     """Create a migration file for all the locale tables we need to set up."""
     description = "Create tables for all locales (raw data)"
     migration_statement = ""
-    for locale in locales:
+    for locale in LOCALES:
         migration_statement += create_locale_table(locale)
     make_migration(description=description, sql=migration_statement)
 
@@ -71,15 +72,14 @@ def insert_all_locale_data():
     Insert test data from all CSV files into the database.
     This consists of the raw data from the country-list repo.
     """
-    for locale in locales:
+    for locale in LOCALES:
         insert_locale_data(locale)
 
 
 def create_test_tables():
     """Create tables required for performance testing."""
-    sizes = [100000, 1000000, 10000000]
-    for locale in locales:
-        for size in sizes:
+    for locale in LOCALES:
+        for size in DATASET_SIZES:
             create_synthetic_test_table(locale, size)
 
 
