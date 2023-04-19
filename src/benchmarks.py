@@ -76,7 +76,7 @@ COLLATIONS = [
 ]
 
 # The sizes of dataset we actually test
-DATASET_SIZES = [100000, 1000000, 10000000]
+DATASET_SIZES = [1_000_000]
 
 
 def performance_benchmark(iterations: int, tailoring_size: int):
@@ -89,7 +89,6 @@ def performance_benchmark(iterations: int, tailoring_size: int):
     added to the collation when compiling MySQL.
     """
     conn = Connector()
-    pre_check(conn)
     experiment_logger.init()
 
     # Generate all combinations of collations, locales and dataset sizes
@@ -222,7 +221,6 @@ def test_collation(conn: Connector, config: dict):
 def validity_tests():
     """Check that pairs of collations produce the same results."""
     conn = Connector()
-    pre_check(conn)
 
     table = "country_list_no_NO"
     collations = [
@@ -276,14 +274,6 @@ def get_order_by(db: Connector, table: str, collation: str, ascending: bool):
     """
     db.cursor.execute(query)
     return db.cursor.fetchall()
-
-
-def pre_check(db: Connector):
-    """Check that the tables exist."""
-    query = "SELECT COUNT(*), MIN(VALUE), MAX(value) FROM my_project.test1_no_NO;"
-    db.cursor.execute(query)
-    count, min_value, max_value = db.cursor.fetchone()
-    log.info(f"Table test1_no_NO has {count:n} rows. {min_value=}, {max_value=}")
 
 
 def benchmark_order_by(db: Connector, table: str, collation: str, ascending: bool):
