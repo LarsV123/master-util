@@ -11,18 +11,18 @@ from utils.custom_logger import log
 DATABASE_FILE = "experiments.db"
 
 
-def reset(conn: sqlite3.Connection):
+def reset():
     """Reset the database to a clean state."""
     log.debug("Resetting database...")
-    cursor = conn.cursor()
+    db = sqlite3.connect(DATABASE_FILE)
+    cursor = db.cursor()
     cursor.execute("DROP TABLE IF EXISTS benchmarks;")
-    conn.commit()
+    db.commit()
 
 
 def init():
     """Set up log table."""
     db = sqlite3.connect(DATABASE_FILE)
-    reset(db)
 
     log.debug("Initializing database...")
 
@@ -37,6 +37,7 @@ def init():
         locale TEXT NOT NULL,
         data_table TEXT NOT NULL,
         data_size INTEGER NOT NULL,
+        tailoring_size INTEGER NOT NULL,
         order_by_asc REAL NOT NULL,
         order_by_desc REAL NOT NULL,
         equals REAL NOT NULL,
@@ -59,6 +60,7 @@ def log_benchmark(result: dict):
         locale,
         data_table,
         data_size,
+        tailoring_size,
         order_by_asc,
         order_by_desc,
         equals
@@ -69,6 +71,7 @@ def log_benchmark(result: dict):
         :locale,
         :data_table,
         :data_size,
+        :tailoring_size,
         :order_by_asc,
         :order_by_desc,
         :equals
@@ -88,6 +91,7 @@ def get_results():
         collation,
         data_table,
         data_size,
+        tailoring_size,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -97,7 +101,8 @@ def get_results():
     GROUP BY
         collation,
         data_table,
-        data_size;
+        data_size,
+        tailoring_size;
     """
     return db.execute(query).fetchall()
 
@@ -115,6 +120,7 @@ def get_comparison(config: dict):
         collation,
         locale,
         data_size,
+        tailoring_size,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -124,13 +130,15 @@ def get_comparison(config: dict):
     GROUP BY
         collation,
         locale,
-        data_size
+        data_size,
+        tailoring_size
     )
     SELECT
         cte1.collation AS icu,
         cte2.collation AS mysql,
         cte1.locale,
         cte1.data_size,
+        cte1.tailoring_size,
         ROUND(
             100.0 * (cte1.order_by_asc - cte2.order_by_asc) / cte2.order_by_asc,
             2
@@ -151,9 +159,11 @@ def get_comparison(config: dict):
         AND cte2.collation = :mysql
         AND cte1.locale = :locale
         AND cte1.data_size = cte2.data_size
+        AND cte1.tailoring_size = cte2.tailoring_size
     ORDER BY
         cte1.locale,
-        cte1.data_size;
+        cte1.data_size,
+        cte1.tailoring_size;
     """
     return db.execute(query, config).fetchall()
 

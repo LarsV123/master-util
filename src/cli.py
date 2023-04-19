@@ -7,6 +7,7 @@ from test_data_handler import (
     create_test_tables,
 )
 from benchmarks import performance_benchmark, validity_tests, report_results
+import utils.experiment_logger as experiment_logger
 
 
 @click.group()
@@ -57,10 +58,29 @@ def setup_perf():
 
 @cli.command()
 @click.option("-i", "--iterations", default=3, help="Number of times to run the test.")
-def perf(iterations: int):
-    """Run a simplified performance test"""
+@click.option(
+    "-d",
+    "--delta",
+    required=True,
+    help="Number of tailoring rules added to the ICU collations as a prefix.",
+)
+@click.option(
+    "-r",
+    "--reset",
+    is_flag=True,
+    help="Reset the log database before running the test.",
+)
+def perf(iterations: int, delta: int, reset: bool):
+    """
+    Runs a set of performance benchmarks.
+    Results are logged to an SQLite database.
+    """
+    if reset:
+        log.info("Resetting the log database...")
+        experiment_logger.reset()
+    log.info("Running performance benchmarks...")
     log.info("Running a simplified set of performance benchmarks...")
-    performance_benchmark(iterations)
+    performance_benchmark(iterations, delta)
 
 
 @cli.command()

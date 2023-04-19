@@ -5,7 +5,7 @@ from utils.profile import get_runtime
 from utils import experiment_logger
 from tabulate import tabulate
 from tqdm import tqdm
-from test_data_handler import DATASET_SIZES
+
 
 # This is used to format numbers with thousands separators (e.g. 123 456 780).
 locale.setlocale(locale.LC_ALL, "")
@@ -75,9 +75,19 @@ COLLATIONS = [
     },
 ]
 
+# The sizes of dataset we actually test
+DATASET_SIZES = [100000, 1000000, 10000000]
 
-def performance_benchmark(iterations: int):
-    """Run a performance benchmark comparing different collations."""
+
+def performance_benchmark(iterations: int, tailoring_size: int):
+    """
+    Run a performance benchmark comparing different collations.
+    Each configuration is run `iterations + 1` times, where the first
+    is a "warm-up" run which is not logged.
+
+    The `tailoring_size` parameter refers to the number of tailoring rules
+    added to the collation when compiling MySQL.
+    """
     conn = Connector()
     pre_check(conn)
     experiment_logger.init()
@@ -98,6 +108,7 @@ def performance_benchmark(iterations: int):
                         "locale": locale,
                         "data_table": f"test_{locale}_{size}",
                         "data_size": size,
+                        "tailoring_size": tailoring_size,
                     }
                 )
             done[locale].append(collation["icu"])
@@ -110,20 +121,28 @@ def performance_benchmark(iterations: int):
                         "locale": locale,
                         "data_table": f"test_{locale}_{size}",
                         "data_size": size,
+                        "tailoring_size": tailoring_size,
                     }
                 )
             done[locale].append(collation["mysql"])
 
     tqdm.write("Running performance benchmarks...")
     tqdm.write(f"Number of configurations: {len(configurations)}")
-    steps = len(configurations) * iterations
+    steps = len(configurations) * (iterations + 1)
     pbar = tqdm(total=steps)
     completed = 0
     for config in configurations:
+        # Warm-up run
+        status = f"{config['collation']} (0/{iterations})"
+        pbar.set_description(status)
+        test_collation(conn, config)
+        pbar.update(1)
+
         for i in range(iterations):
             status = f"{config['collation']} ({i+1}/{iterations})"
             pbar.set_description(status)
-            test_collation(conn, config)
+            result = test_collation(conn, config)
+            experiment_logger.log_benchmark(result)
             pbar.update(1)
         completed += 1
         tqdm.write(f"Completed {completed}/{len(configurations)} configurations")
@@ -144,6 +163,7 @@ def report_results():
                 "Collation",
                 "Data set",
                 "Data size",
+                "Tailoring size",
                 "Order by (ASC)",
                 "Order by (DESC)",
                 "Equals",
@@ -167,6 +187,7 @@ def report_results():
                 "MySQL collation",
                 "Locale",
                 "Data size",
+                "Tailoring size",
                 "ASC slowdown (%)",
                 "DESC slowdown (%)",
                 "Equals slowdown (%)",
@@ -195,8 +216,7 @@ def test_collation(conn: Connector, config: dict):
         config["data_table"],
         config["collation"],
     )
-
-    experiment_logger.log_benchmark(result)
+    return result
 
 
 def validity_tests():
