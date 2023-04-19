@@ -13,6 +13,9 @@ python src/migrate.py init
 
 # Download source data used for testing
 git clone git@github.com:umpirsky/country-list.git data/country-list
+
+# FlameGraph util for generating flame graphs
+git clone https://github.com/brendangregg/FlameGraph flamegraph
 ```
 
 ## MySQL
@@ -62,4 +65,25 @@ cli init
 # Set up and run a quick test
 cli setup1
 cli test1
+```
+
+## Flame graphs & perf
+
+To generate flame graphs, we use the utilities `perf` and `FlameGraph`.
+
+Source:
+https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html
+
+```bash
+wsl
+
+# Find PID of mysqld process
+ps aux | grep mysqld
+
+# Generate flame graph
+cd FlameGraph
+perf record -p <pid> -F 99 -a -g -- sleep 60
+perf record -F 99 -g -p 3657 -- sleep 10
+perf script | ./stackcollapse-perf.pl > out.perf-folded
+./flamegraph.pl out.perf-folded > perf.svg
 ```

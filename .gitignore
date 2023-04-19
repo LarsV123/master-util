@@ -8,3 +8,4 @@ venv
 
 # Third-party libraries
 data/country-list
+flamegraph
