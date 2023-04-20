@@ -8,6 +8,7 @@ from test_data_handler import (
 )
 from benchmarks import performance_benchmark, validity_tests, report_results
 import utils.experiment_logger as experiment_logger
+from perf_utils import perf_load_test
 
 
 @click.group()
@@ -85,7 +86,15 @@ def perf(iterations: int, delta: int, reset: bool):
 
 @cli.command()
 def report():
+    """Report results from performance benchmarks."""
     report_results()
+
+
+@cli.command()
+@click.option("-c", "--collation", default="utf8mb4_icu_en_US_ai_ci")
+def stresstest(collation: str):
+    """Run benchmarks using ICU collation, to produce data for perf."""
+    perf_load_test(collation)
 
 
 @cli.command()

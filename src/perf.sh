@@ -10,6 +10,7 @@ usage() {
   echo "  -c COLLATION: Specify the COLLATION to test"
   echo "  -p PID: Specify the PID of the running MySQL server"
   echo "  -h: Display this help message"
+  echo "Example: $0 -c utf8mb4_0900_ai_ci -p 1234"
 }
 
 # Parse command line arguments
@@ -56,7 +57,7 @@ background_processing() {
   echo "Running background processing with parameters:"
   echo "  COLLATION: $collation"
   echo "  PID: $pid"
-  sleep 5
+  python3 ./cli.py stresstest -c $collation -p $pid
   echo "Background processing complete."
 }
 
