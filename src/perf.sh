@@ -57,12 +57,18 @@ background_processing() {
   echo "Running background processing with parameters:"
   echo "  COLLATION: $collation"
   echo "  PID: $pid"
-  python3 ./cli.py stresstest -c $collation -p $pid
+  perf record -p 14147 -F 4000 -g -- sleep 30
   echo "Background processing complete."
 }
+
+# Check our input variables
+print_input_variables
 
 # Run background processing in a separate thread
 background_processing &
 
-# Call the function
-print_input_variables
+# Generate data for perf to record
+python3 src/cli.py stresstest -c $collation
+
+# Wait for background processing to complete
+wait
