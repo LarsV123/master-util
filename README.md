@@ -1,34 +1,56 @@
+# README
+
+This repository contains client-side utilities for my master's thesis project.
+They are used for benchmarking and testing a MySQL server.
+
 # Setup
 
-Prerequisites:
+## Prerequisites
 
-- Python 3.9 or greater
+- Set up `pyenv`
+- Compile MySQL from source (see separate repository)
+- Copy `.env.example` to `.env` and set the environment variables
 
 ```bash
-# Run setup script to install dependencies and test CLI
-bash scripts/setup.sh
-
-# Initialize migrations table
-python src/migrate.py init
-
 # Download source data used for testing
 git clone git@github.com:umpirsky/country-list.git data/country-list
 
-# FlameGraph util for generating flame graphs
+# Download FlameGraph util for generating flame graphs
 git clone https://github.com/brendangregg/FlameGraph flamegraph
 ```
 
 ## MySQL
 
-This project is intended to be used with a MySQL database server.
+```bash
+# Run MySQL server
+~/mysql/release-build/runtime_output_directory/mysqld --datadir=../data
 
-Run MySQL server:
+# Start client (from separate terminal) for initial setup
+~/mysql/release-build/runtime_output_directory/mysql -uroot
+
+# With the client, create the user specified in .env
+CREATE USER '<user>'@'%<host>' IDENTIFIED BY '<password>';
+GRANT ALL PRIVILEGES ON *.* TO '<user>'@'%<host>';
+```
+
+## Python
 
 ```bash
-./runtime_output_directory/mysqld --datadir=../data
+# Set up a Python virtual environment with pyenv (recommended method)
+pyenv install 3.11.2
+pyenv virtualenv 3.11.2 3.11.2-master-util
+pyenv local 3.11.2-master-util
+pyenv shell 3.11.2-master-util
 
-# Install MySQL client (this is for Ubuntu, but it should be similar for other distros)
-sudo apt install mysql-shell
+# Install dependencies
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
+# Check that a MySQL server is running and that we have access to it
+python src/cli.py -v test
+
+# Initialize migrations table
+python src/migrate.py init
 ```
 
 # Development
@@ -74,16 +96,24 @@ To generate flame graphs, we use the utilities `perf` and `FlameGraph`.
 Source:
 https://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html
 
+The basic concept is that we start recording activity in the MySQL server process with `perf` from one terminal, and then start a Python script in a separate terminal which executes a "stresstest" query. After the recording is done, we can generate a flame graph from the recorded data.
+
+Example usage:
+
 ```bash
-wsl
+cd FlameGraph
 
 # Find PID of mysqld process
 ps aux | grep mysqld
+-> 14147
 
-# Generate flame graph
-cd FlameGraph
-perf record -p <pid> -F 99 -a -g -- sleep 60
-perf record -F 99 -g -p 3657 -- sleep 10
+# Start perf recording in one terminal
+perf record -p 14147 -F 4000 -g -- sleep 30
+
+# Test ICU collation using Python script in another terminal
+python src/cli.py stresstest -c utf8mb4_icu_en_US_ai_ci # or: utf8mb4_0900_ai_ci
+
+# Create flame graph
 perf script | ./stackcollapse-perf.pl > out.perf-folded
-./flamegraph.pl out.perf-folded > perf.svg
+./flamegraph.pl out.perf-folded > utf8mb4_icu_en_US_ai_ci.svg # or: utf8mb4_0900_ai_ci.svg
 ```
