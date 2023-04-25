@@ -55,15 +55,16 @@ python src/migrate.py init
 
 # Development
 
-Run these commands to check formatting, linting and types before committing:
-
 ```bash
-black . && flake8 . && mypy .
+# Check formatting, linting and types (should not produce any errors)
+black src --check && flake8 src && mypy src
+
+# Fix formatting automatically
+black src
+
+# Update the requirements files if dependencies have changed
+pip-compile requirements.in --resolver=backtracking
 ```
-
-These should not produce any errors.
-
-It is recommended to create a git precommit hook to run these commands before pushing changes to the repository. To do this, copy the file `scripts/pre-push` to `.git/hooks/pre-push`.
 
 # Usage
 
@@ -109,6 +110,10 @@ ps aux | grep mysqld
 
 # Start perf recording in one terminal
 perf record -p 14147 -F 4000 -g -- sleep 30
+# -p 14147: record activity in process with PID 14147
+# -g: record call graph
+# -F 4000: sample frequency
+# -- sleep 30: record for 30 seconds
 
 # Test ICU collation using Python script in another terminal
 python src/cli.py stresstest -c utf8mb4_icu_en_US_ai_ci # or: utf8mb4_0900_ai_ci

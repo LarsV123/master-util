@@ -1,0 +1,35 @@
+# Command-line interface
+click >= 8.1, < 9.0
+
+# Text formatting
+tabulate
+types-tabulate
+
+rich
+
+# Progress bar
+tqdm
+types-tqdm
+
+# Database client
+mysql-connector-python==8.0.32
+
+# Read environment variables from .env
+python-dotenv
+
+# Used for reading .csv files
+pandas >= 1.5, < 1.6
+pandas-stubs >= 1.5, < 1.6
+
+# Development dependencies
+## Linting
+flake8
+
+## Type checking
+mypy
+
+## Formatting
+black
+
+## Dependency management tools
+pip-tools
