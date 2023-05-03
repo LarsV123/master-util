@@ -25,7 +25,8 @@ def reset_validity_tables(conn: Connector):
     for i in tqdm(range(0, len(unicode))):
         try:
             conn.cursor.execute(statement, unicode[i])
-        except:
+        except Exception as e:
+            log.debug(e)
             failures.append(unicode[i])
     log.info(f"Failed to insert {len(failures)} of {len(unicode)} characters.")
 
@@ -119,7 +120,7 @@ def validate_collations(
     log.debug("Comparing adjacent strings...")
     query1 = f"""
     -- sql
-    SELECT 
+    SELECT
         %s = %s COLLATE {collation1} AS equal,
         %s < %s COLLATE {collation1} AS less_than;
     """
@@ -127,7 +128,7 @@ def validate_collations(
 
     query2 = f"""
     -- sql
-    SELECT 
+    SELECT
         %s = %s COLLATE {collation2} AS equal,
         %s < %s COLLATE {collation2} AS less_than;
     """
@@ -145,7 +146,7 @@ def validate_collations(
 
         less_than_or_equal = result2[0] or result2[1]
         if not less_than_or_equal:
-            log.warning(f"The collations do not place the strings in the same order.")
+            log.warning("The collations do not place the strings in the same order.")
             log.info(f"String 1: {s1=} | {[hex(ord(c)) for c in s1]}")
             log.info(f"String 2: {s2=} | {[hex(ord(c)) for c in s2]}")
             log.info(f"{collation1}: equal={result1[0]} | less_than={result1[1]}")
@@ -163,7 +164,7 @@ def validate_collations(
     return True
 
 
-def create_test_strings():
+def create_test_strings() -> list[str]:
     """
     Create a list of additional strings to be used when comparing collations.
     For the purposes of this test, this is just a list of 2-character
@@ -177,7 +178,7 @@ def create_test_strings():
     return strings
 
 
-def create_unicode_tuples():
+def create_unicode_tuples() -> list[tuple[int, str, str]]:
     """
     Create a list of tuples of all characters in the Unicode range.
     Each tuple is on the form (codepoint, hex value of codepoint, character).
