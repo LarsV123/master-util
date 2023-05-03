@@ -87,7 +87,6 @@ def validate_collations(
     log.debug(f"Validating collations {collation1=} and {collation2=}...")
 
     # Get count of characters in test tables
-    # TODO: Rename tables to be more descriptive
     """
     test_strings: This contains arbitrary strings used for testing,
     including all 2-character permutations of the Latin alphabet.
