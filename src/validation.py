@@ -5,42 +5,6 @@ from db import Connector
 from utils.custom_logger import log
 
 
-def reset_validity_tables(conn: Connector):
-    """Reset the tables used for the validity test."""
-
-    # Truncate data tables
-    log.info("Truncating tables used for validity tests...")
-    conn.cursor.execute("TRUNCATE TABLE test_strings;")
-    conn.cursor.execute("TRUNCATE TABLE unicode_characters;")
-
-    # Insert all valid Unicode characters
-    unicode = create_unicode_tuples()
-    log.info(f"Inserting {len(unicode)} Unicode characters into the database...")
-    statement = """
-    -- sql
-    INSERT INTO unicode_characters (code_point, hex_value, char_value)
-    VALUES (%s, %s, %s);
-    """
-    failures = []
-    for i in tqdm(range(0, len(unicode))):
-        try:
-            conn.cursor.execute(statement, unicode[i])
-        except Exception as e:
-            log.debug(e)
-            failures.append(unicode[i])
-    log.info(f"Failed to insert {len(failures)} of {len(unicode)} characters.")
-
-    # Insert test strings (2-character permutations of the Latin alphabet)
-    strings = create_test_strings()
-    log.info(f"Inserting {len(strings)} test strings into the database...")
-    statement = "INSERT INTO test_strings (string) VALUES (%s);"
-    for i in tqdm(range(0, len(strings))):
-        conn.cursor.execute(statement, (strings[i],))
-
-    conn.connection.commit()
-    log.info("Finished resetting validity test tables.")
-
-
 def validate_collations(
     connection1: Connector,
     connection2: Connector,
@@ -162,6 +126,42 @@ def validate_collations(
             return False
 
     return True
+
+
+def reset_validity_tables(conn: Connector):
+    """Reset the tables used for the validity test."""
+
+    # Truncate data tables
+    log.info("Truncating tables used for validity tests...")
+    conn.cursor.execute("TRUNCATE TABLE test_strings;")
+    conn.cursor.execute("TRUNCATE TABLE unicode_characters;")
+
+    # Insert all valid Unicode characters
+    unicode = create_unicode_tuples()
+    log.info(f"Inserting {len(unicode)} Unicode characters into the database...")
+    statement = """
+    -- sql
+    INSERT INTO unicode_characters (code_point, hex_value, char_value)
+    VALUES (%s, %s, %s);
+    """
+    failures = []
+    for i in tqdm(range(0, len(unicode))):
+        try:
+            conn.cursor.execute(statement, unicode[i])
+        except Exception as e:
+            log.debug(e)
+            failures.append(unicode[i])
+    log.info(f"Failed to insert {len(failures)} of {len(unicode)} characters.")
+
+    # Insert test strings (2-character permutations of the Latin alphabet)
+    strings = create_test_strings()
+    log.info(f"Inserting {len(strings)} test strings into the database...")
+    statement = "INSERT INTO test_strings (string) VALUES (%s);"
+    for i in tqdm(range(0, len(strings))):
+        conn.cursor.execute(statement, (strings[i],))
+
+    conn.connection.commit()
+    log.info("Finished resetting validity test tables.")
 
 
 def create_test_strings() -> list[str]:
