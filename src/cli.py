@@ -6,9 +6,10 @@ from test_data_handler import (
     insert_all_locale_data,
     create_test_tables,
 )
-from benchmarks import performance_benchmark, validity_tests, report_results
+from benchmarks import performance_benchmark, report_results
 import utils.experiment_logger as experiment_logger
 from perf_utils import perf_load_test
+from validation import reset_validity_tables, validate_collations
 
 
 @click.group()
@@ -98,10 +99,30 @@ def stresstest(collation: str):
 
 
 @cli.command()
-def validate():
+@click.option(
+    "-r",
+    "--reset",
+    is_flag=True,
+    help="Truncate and reinsert the character table before running the test.",
+)
+def validate(reset: bool):
     """Run a simplified validity test"""
-    log.info("Running a simplified set of validity tests...")
-    validity_tests()
+    log.info("Running validity tests...")
+    collation1 = "utf8mb4_icu_nb_NO_ai_ci"
+    collation2 = "utf8mb4_icu_nb_NO_ai_ci"
+    # c2 = "utf8mb4_icu_en_US_ai_ci"
+    # c2 = "utf8mb4_nb_0900_ai_ci"
+
+    log.info(f"Collation 1: {collation1}")
+    log.info(f"Collation 2: {collation2}")
+    connection1 = Connector()
+    connection2 = Connector()
+    if reset:
+        reset_validity_tables(connection1)
+    validate_collations(connection1, connection2, collation1, collation2)
+
+    connection1.close()
+    connection2.close()
 
 
 if __name__ == "__main__":

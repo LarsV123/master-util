@@ -7,5 +7,4 @@ CREATE TABLE validity_test_strings (
     PRIMARY KEY(string)
     );
 
-
 COMMIT;
