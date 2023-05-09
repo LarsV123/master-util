@@ -97,8 +97,9 @@ def validate_collations(
         %s < %s COLLATE {collation2} AS less_than;
     """
     log.debug(f"{query2=}")
+    pbar = tqdm(total=len(strings) - 1)
 
-    for i in tqdm(range(1, len(strings))):
+    for i in range(1, len(strings)):
         s1 = strings[i - 1][0]
         s2 = strings[i][0]
 
@@ -110,6 +111,7 @@ def validate_collations(
 
         less_than_or_equal = result2[0] or result2[1]
         if not less_than_or_equal:
+            pbar.close()
             log.warning("The collations do not place the strings in the same order.")
             log.info(f"String 1: {s1=} | {[hex(ord(c)) for c in s1]}")
             log.info(f"String 2: {s2=} | {[hex(ord(c)) for c in s2]}")
@@ -118,12 +120,15 @@ def validate_collations(
             return False
 
         if result1 != result2:
+            pbar.close()
             log.warning("The collations do not agree on the comparison result.")
             log.info(f"String 1: {s1=} | {[hex(ord(c)) for c in s1]}")
             log.info(f"String 2: {s2=} | {[hex(ord(c)) for c in s2]}")
             log.info(f"{collation1}: equal={result1[0]} | less_than={result1[1]}")
             log.info(f"{collation2}: equal={result2[0]} | less_than={result2[1]}")
             return False
+
+        pbar.update(1)
 
     return True
 
