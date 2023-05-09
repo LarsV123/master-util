@@ -12,11 +12,11 @@ class Connector:
     environment variables.
     """
 
-    def __init__(self):
+    def __init__(self, port=3306):
         # Connect to the MySQL server
         self.connection = mysql.connect(
             host=os.environ.get("HOST"),
-            port=os.environ.get("PORT"),
+            port=port,
             database=os.environ.get("DATABASE"),
             user=os.environ.get("DB_USER"),
             password=os.environ.get("DB_PASSWORD"),

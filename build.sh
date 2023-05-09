@@ -80,9 +80,11 @@ ninja -j$NINJA_THREADS
 
 echo "Done building MySQL"
 
-INIT_SERVER="~/mysql/${BUILD_DIR}/runtime_output_directory/mysqld --datadir=${DATA_DIR} --initialize-insecure"
-RUN_SERVER="~/mysql/${BUILD_DIR}/runtime_output_directory/mysqld --datadir=${DATA_DIR}"
-RUN_CLIENT="~/mysql/${BUILD_DIR}/runtime_output_directory/mysql -uroot"
+PATH="~/mysql/${BUILD_DIR}/runtime_output_directory"
+SERVER_OPTIONS="--datadir=${DATA_DIR} --port=3306 --sort_buffer_size=1024M --innodb_buffer_pool_size=1024M"
+INIT_SERVER="${PATH}/mysqld ${SERVER_OPTIONS} --initialize-insecure"
+RUN_SERVER="${PATH}/mysqld ${SERVER_OPTIONS}"
+RUN_CLIENT="${PATH}/mysql -uroot"
 
 printf "\n**********\n"
 printf "Initialize server:\n  ${INIT_SERVER}\n"

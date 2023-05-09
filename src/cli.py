@@ -99,26 +99,43 @@ def stresstest(collation: str):
 
 
 @cli.command()
-@click.option(
-    "-r",
-    "--reset",
-    is_flag=True,
-    help="Truncate and reinsert the character table before running the test.",
-)
-def validate(reset: bool):
-    """Run a simplified validity test"""
-    log.info("Running validity tests...")
-    collation1 = "utf8mb4_icu_nb_NO_ai_ci"
-    collation2 = "utf8mb4_icu_nb_NO_ai_ci"
-    # c2 = "utf8mb4_icu_en_US_ai_ci"
-    # c2 = "utf8mb4_nb_0900_ai_ci"
+def setup_validity():
+    """Reset and set up tables of test data for the validity test."""
+    log.info("Setting up validity test...")
+    connection = Connector()
+    reset_validity_tables(connection)
+    connection.close()
+    log.info("Finished setting up test data for validity test.")
 
-    log.info(f"Collation 1: {collation1}")
-    log.info(f"Collation 2: {collation2}")
-    connection1 = Connector()
-    connection2 = Connector()
-    if reset:
-        reset_validity_tables(connection1)
+
+@cli.command()
+@click.option(
+    "-p1", "--port1", default=3306, help="Port number for the first connection."
+)
+@click.option(
+    "-p2", "--port2", required=True, help="Port number for the second connection."
+)
+@click.option(
+    "-c1", "--collation1", required=True, help="Collation for the first connection."
+)
+@click.option(
+    "-c2", "--collation2", required=True, help="Collation for the second connection."
+)
+def validate(port1: int, port2: int, collation1: str, collation2: str):
+    """
+    Run a simplified validity test, which is intended to check if two collations
+    produce identical results. This runs a set of queries against two
+    separate connections, and compares the results.
+
+    Use the same port for both connections if you want to test different collations
+    from the same MySQL build.
+    """
+    log.info("Running validity tests...")
+    log.info(f"Port 1: {port1} | Collation 1: {collation1}")
+    log.info(f"Port 2: {port2} | Collation 2: {collation2}")
+
+    connection1 = Connector(port=port1)
+    connection2 = Connector(port=port2)
     validate_collations(connection1, connection2, collation1, collation2)
 
     connection1.close()

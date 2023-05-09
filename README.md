@@ -180,6 +180,13 @@ migrate up
 cli init
 ```
 
+### Performance benchmarks
+
+```bash
+# See available options
+cli perf --help
+```
+
 ### Flame graphs & perf
 
 To generate flame graphs, we use the utilities `perf` and `FlameGraph`.
@@ -211,4 +218,22 @@ python src/cli.py stresstest -c utf8mb4_icu_en_US_ai_ci # or: utf8mb4_0900_ai_ci
 # Create flame graph
 perf script | ./stackcollapse-perf.pl > out.perf-folded
 ./flamegraph.pl out.perf-folded > utf8mb4_icu_en_US_ai_ci.svg # or: utf8mb4_0900_ai_ci.svg
+```
+
+### Validation tests
+
+The validation tests are intended to check that two collations produce identical
+results. This is done by compiling two versions of the MySQL server, one with
+the original collation and one with the new collation, and then running a set
+of queries on both servers and comparing the results.
+
+```bash
+# Prepare test data for the validity test (run once before running the test)
+cli setup-validity
+
+# Compare the ICU and MySQL versions of the same collation (will fail, as they differ):
+cli validate -p1 3306 -p2 3306 -c1 "utf8mb4_icu_nb_NO_ai_ci" -c2 "utf8mb4_nb_0900_ai_ci"
+
+# Compare the same ICU collation on different builds of MySQL:
+cli validate -p1 3306 -p2 3307 -c1 "utf8mb4_icu_nb_NO_ai_ci" -c2 "utf8mb4_icu_nb_NO_ai_ci"
 ```
