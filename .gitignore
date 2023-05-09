@@ -9,3 +9,14 @@ venv
 # Third-party libraries
 data/country-list
 flamegraph
+boost
+
+# MySQL source code (kept in separate repository)
+mysql-server
+
+# MySQL data folder (generated locally)
+mysql-data
+
+# MySQL builds (compiled locally)
+debug-build
+release-build
