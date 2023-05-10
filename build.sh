@@ -2,12 +2,29 @@
 
 # Script for building MySQL
 
+# Exit on error
+set -e
+
+# Exit if an undefined variable is used
+set -u
+
+# Exit if a command in a pipeline fails
+set -o pipefail
+
+# Print commands before executing them (useful for debugging)
+# set -x
+
 # The script assumes that the project is placed at ~/mysql,
 # with the mysql-server folder at ~/mysql/mysql-server
 DATA_DIR=~/mysql/mysql-data
+if [ ! -d "$DATA_DIR" ]; then
+  echo "Error: $DATA_DIR does not exist."
+  exit 1
+fi
 
-# Exit on error
-set -e
+# Default values for optional command-line arguments
+DEBUG_BUILD=false
+NINJA_THREADS=4 # More threads require more RAM (> 16 GB)
 
 # Parse command-line arguments
 while getopts "b:t:d" opt; do
@@ -37,12 +54,13 @@ if [ -z "$BUILD_DIR" ]; then
   exit 1
 fi
 
-if [ -z "$NINJA_THREADS" ]; then
-  NINJA_THREADS=4
-fi
-
 # Create build folder (no error if it already exists)
 mkdir -p $BUILD_DIR
+if [ ! -d "$BUILD_DIR" ]; then
+  echo "Error: $BUILD_DIR does not exist."
+  exit 1
+fi
+
 cd $BUILD_DIR
 echo "Building MySQL in folder: $PWD"
 
@@ -58,25 +76,39 @@ else
                     -DWITH_ASAN=0"
 fi
 
-cmake ../mysql-server/ \
-  $CMAKE_BUILD_TYPE \
-  -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-  -DWITH_SYSTEM_LIBS=0 \
-  -DWITH_UNIT_TESTS=0 \
-  -DWITH_ROUTER=0 \
-  -DWITH_AUTHENTICATION_FIDO=0 \
-  -DWITH_NDB=0 \
-  -DWITH_ZLIB=bundled \
-  -DDOWNLOAD_BOOST=1 \
-  -DWITH_BOOST=~/mysql/boost \
-  -DWITH_ASAN=0 \
-  -DWITH_NDBCLUSTER_STORAGE_ENGINE=0 \
-  -DWITH_ICU=system \
-  -GNinja
+CMAKE_ARGS=(
+  "../mysql-server/"
+  "$CMAKE_BUILD_TYPE"
+  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+  "-DWITH_SYSTEM_LIBS=0"
+  "-DWITH_UNIT_TESTS=0"
+  "-DWITH_ROUTER=0"
+  "-DWITH_AUTHENTICATION_FIDO=0"
+  "-DWITH_NDB=0"
+  "-DWITH_ZLIB=bundled"
+  "-DDOWNLOAD_BOOST=1"
+  "-DWITH_BOOST=~/mysql/boost"
+  "-DWITH_NDBCLUSTER_STORAGE_ENGINE=0"
+  "-DWITH_ICU=system"
+  "-GNinja"
+)
 
-echo "Running ninja"
-# Defaults to 4 threads (-j4). More threads require more RAM (> 16 GB).
-ninja -j$NINJA_THREADS
+# Run cmake and exit if it fails
+if ! cmake "${CMAKE_ARGS[@]}"; then
+  echo "Error: cmake failed."
+  exit 1
+fi
+
+if ! echo "$NINJA_THREADS" | grep -qE '^[0-9]+$'; then
+  echo "Error: NINJA_THREADS must be a valid integer."
+  exit 1
+fi
+
+# Run ninja and exit if it fails
+if ! ninja -j$NINJA_THREADS; then
+  echo "Error: ninja failed."
+  exit 1
+fi
 
 echo "Done building MySQL"
 
@@ -90,3 +122,5 @@ printf "\n**********\n"
 printf "Initialize server:\n  ${INIT_SERVER}\n"
 printf "Run server:\n  ${RUN_SERVER}\n"
 printf "Run client:\n  ${RUN_CLIENT}\n"
+
+exit 0
