@@ -53,6 +53,7 @@ def get_locale_data(locale: str):
 
 def insert_locale_data(locale: str):
     """Insert data from the CSV file for this locale."""
+    conn = Connector()
     table_name = f"country_list_{locale}"
 
     log.debug(f"Truncating table {table_name}")
@@ -65,7 +66,6 @@ def insert_locale_data(locale: str):
     ;
     """
     tuples = get_locale_data(locale)
-    conn = Connector()
     conn.cursor.executemany(statement, tuples)
     conn.connection.commit()
     log.debug(f"Finished inserting {len(tuples)} rows for {locale=}")
