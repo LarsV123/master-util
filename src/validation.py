@@ -58,28 +58,8 @@ def validate_collations(
 
     unicode_characters: This contains all valid Unicode characters.
     """
-    tables = ["test_strings", "unicode_characters"]
-    for t in tables:
-        log.debug(f"Counting rows in {t}...")
-        connection1.cursor.execute(f"SELECT COUNT(*) FROM {t};")
-        count = connection1.cursor.fetchone()[0]
-        log.debug(f"{t} contains {count} rows.")
-        assert count > 0
-
-    log.debug("Fetching test strings from the database...")
-    query = f"""
-    -- sql
-    SELECT s FROM (
-        SELECT string AS s FROM test_strings
-        UNION
-        SELECT char_value AS s FROM unicode_characters
-    ) AS t
-    ORDER BY t.s COLLATE {collation1} ASC;
-    """
-    connection1.cursor.execute(query)
-    strings = connection1.cursor.fetchall()
-    log.debug(f"Fetched {len(strings)} strings from the database.")
-    assert len(strings) > 0
+    # Get test data
+    strings = get_test_data(connection1, collation1)
 
     log.debug("Comparing adjacent strings...")
     query1 = f"""
@@ -100,8 +80,8 @@ def validate_collations(
     pbar = tqdm(total=len(strings) - 1)
 
     for i in range(1, len(strings)):
-        s1 = strings[i - 1][0]
-        s2 = strings[i][0]
+        s1 = strings[i - 1]
+        s2 = strings[i]
 
         connection1.cursor.execute(query1, (s1, s2, s1, s2))
         result1 = connection1.cursor.fetchone()
@@ -167,6 +147,97 @@ def reset_validity_tables(conn: Connector):
 
     conn.connection.commit()
     log.info("Finished resetting validity test tables.")
+
+
+def find_collation_differences(
+    connection1: Connector, connection2: Connector, collation1: str, collation2: str
+) -> list:
+    """
+    Find all differences between two collations.
+    This is a brute-force approach that compares all possible combinations of
+    characters in the Unicode range, as well as a set of test strings.
+    It is very slow and should only be used after the `validate_collations`
+    function has determined that a difference exists.
+
+    It assumes that connection1 and collation1 are the reference implementation,
+    i.e. "correct", and will compare connection2 and collation2 to that.
+    """
+    log.debug("Getting test data...")
+    strings = get_test_data(connection1, collation1)
+    total_size = len(strings)
+    total_comparisons = total_size * total_size / 2
+
+    log.debug("Comparing strings...")
+    query1 = f"""
+    -- sql
+    SELECT
+        %s = %s COLLATE {collation1} AS equal,
+        %s < %s COLLATE {collation1} AS less_than;
+    """
+    log.debug(f"{query1=}")
+
+    query2 = f"""
+    -- sql
+    SELECT
+        %s = %s COLLATE {collation2} AS equal,
+        %s < %s COLLATE {collation2} AS less_than;
+    """
+    log.debug(f"{query2=}")
+
+    differences = []
+
+    # Naive implementation, no optimizations
+    for i in range(0, total_size):
+        s1 = strings[i]
+        for j in range(i, total_size):
+            s2 = strings[j]
+            connection1.cursor.execute(query1, (s1, s2, s1, s2))
+            result1 = (
+                connection1.cursor.fetchone()
+            )  # Tuple on the form (equal, less_than)
+
+            connection2.cursor.execute(query2, (s1, s2, s1, s2))
+            result2 = (
+                connection2.cursor.fetchone()
+            )  # Tuple on the form (equal, less_than)
+
+            if result1 != result2:
+                differences.append((s1, s2, result1, result2))
+
+    # Compare all characters against each other in batches
+    batch_size = 1000
+    # TODO: Implement this function
+    pass
+
+
+def get_test_data(connection: Connector, collation: str) -> list[str]:
+    """
+    Retrieve the list of test strings from the database, ordered by the given
+    collation.
+    """
+    tables = ["test_strings", "unicode_characters"]
+    for t in tables:
+        log.debug(f"Counting rows in {t}...")
+        connection.cursor.execute(f"SELECT COUNT(*) FROM {t};")
+        count = connection.cursor.fetchone()[0]
+        log.debug(f"{t} contains {count} rows.")
+        assert count > 0
+
+    log.debug("Fetching test strings from the database...")
+    query = f"""
+    -- sql
+    SELECT s FROM (
+        SELECT string AS s FROM test_strings
+        UNION
+        SELECT char_value AS s FROM unicode_characters
+    ) AS t
+    ORDER BY t.s COLLATE {collation} ASC;
+    """
+    connection.cursor.execute(query)
+    strings = [s[0] for s in connection.cursor.fetchall()]
+    log.debug(f"Fetched {len(strings)} strings from the database.")
+    assert len(strings) > 0
+    return strings
 
 
 def create_test_strings() -> list[str]:
