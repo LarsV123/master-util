@@ -77,7 +77,8 @@ bash build.sh -b <build-directory>
 # Start client (from separate terminal)
 ~/mysql/<build-directory>/runtime_output_directory/mysql -uroot
 
-# FIRST TIME ONLY: With the client, create the user specified in .env
+# FIRST TIME ONLY: With the client, create the database and user in .env
+CREATE DATABASE <database>;
 CREATE USER '<user>'@'%<host>' IDENTIFIED BY '<password>';
 GRANT ALL PRIVILEGES ON *.* TO '<user>'@'%<host>';
 ```
@@ -111,6 +112,7 @@ echo 'eval "$(pyenv init -)"' >> ~/.bashrc
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
 echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
 echo 'eval "$(pyenv init -)"' >> ~/.profile
+source ~/.bashrc
 
 # If you use WSL, you may need to do the following:
 ## Disable Windows additions to PATH (if needed)
@@ -167,8 +169,8 @@ These include performance benchmarks, validation tests and profiling.
 
 ```bash
 # Optional: Create aliases for the CLI tools
-echo 'alias cli="python src/cli.py"' >> ~/.bashrc
-echo 'alias migrate="python src/migrate.py"' >> ~/.bashrc
+echo 'alias cli="python ~/mysql/src/cli.py"' >> ~/.bashrc
+echo 'alias migrate="python ~/mysql/src/migrate.py"' >> ~/.bashrc
 source ~/.bashrc
 
 # Test the CLI
