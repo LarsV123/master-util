@@ -16,7 +16,17 @@ set -o pipefail
 
 # The script assumes that the project is placed at ~/mysql,
 # with the mysql-server folder at ~/mysql/mysql-server
+
+# Create a directory for boost if it does not exist
+mkdir -p ~/mysql/boost
+if [ ! -d "~/mysql/boost" ]; then
+  echo "Error: ~/mysql/boost does not exist."
+  exit 1
+fi
+
 DATA_DIR=~/mysql/mysql-data
+# Create the data directory if it does not exist
+mkdir -p $DATA_DIR
 if [ ! -d "$DATA_DIR" ]; then
   echo "Error: $DATA_DIR does not exist."
   exit 1
