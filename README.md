@@ -64,6 +64,9 @@ protobuf-compiler dpkg-dev
 ## Usage
 
 ```bash
+# Build MySQL (takes a while on the first run). Do this for every code change.
+bash build.sh -b <build-directory>
+
 # FIRST TIME ONLY: Initialize MySQL data directory
 ~/mysql/<build-directory>/runtime_output_directory/mysqld --datadir=../mysql-data --initialize-insecure
 
