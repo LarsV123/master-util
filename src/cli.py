@@ -46,8 +46,6 @@ def init():
     """
     log.debug("Inserting test data for all locales...")
     insert_all_locale_data()
-    # TODO: Add a reset method so we can re-run this and start with clean tables.
-    # TODO: Add extra tables with synthetic data for testing (e.g. cross-join the current data)
 
 
 @cli.command()

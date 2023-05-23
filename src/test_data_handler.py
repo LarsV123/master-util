@@ -52,9 +52,13 @@ def get_locale_data(locale: str):
 
 
 def insert_locale_data(locale: str):
-    """Insert data from the CSV file for this locale"""
-    log.debug(f"Inserting data for {locale=}")
+    """Insert data from the CSV file for this locale."""
     table_name = f"country_list_{locale}"
+
+    log.debug(f"Truncating table {table_name}")
+    conn.cursor.execute(f"TRUNCATE TABLE {table_name};")
+
+    log.debug(f"Inserting data for {locale=}")
     statement = f"""
     -- sql
     INSERT INTO {table_name} (id, value) VALUES (%s, %s)
