@@ -22,10 +22,11 @@ This section covers prerequisites needed to build the project.
 sudo apt update
 
 # Clone this repository
-git clone git@github.com:LarsV123/master-util.git ~/mysql
+git clone https://github.com/LarsV123/master-util.git ~/mysql
+cd ~/mysql
 
 # Download source data used for testing
-git clone git@github.com:umpirsky/country-list.git data/country-list
+git clone https://github.com/umpirsky/country-list.git data/country-list
 
 # Download FlameGraph util for generating flame graphs
 git clone https://github.com/brendangregg/FlameGraph flamegraph
@@ -43,7 +44,7 @@ This section covers cloning, building and running a MySQL server.
 
 ```bash
 # Clone my fork of MySQL and switch to the development branch
-git clone git@github.com:LarsV123/mysql-server.git
+git clone https://github.com/LarsV123/mysql-server.git
 cd mysql-server
 git checkout create-custom-collation
 
