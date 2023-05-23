@@ -68,7 +68,7 @@ def log_benchmark(result: dict):
         equals
     )
     VALUES
-    (   
+    (
         :ICU_FROZEN,
         :ICU_EXTRA_TAILORING,
         :collation,

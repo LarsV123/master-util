@@ -1,3 +1,6 @@
+# This is unfinished, disable linter warnings for entire file
+# flake8: noqa
+# mypy: ignore-errors
 import pygraphviz as pgv
 from networkx.drawing.nx_agraph import to_agraph
 import networkx as nx
@@ -11,7 +14,7 @@ generate a graph of the B-Tree structure.
 It needs this setup:
 ```
 sudo apt-get install graphviz graphviz-dev
-pip install black matplotlib pygraphviz faker
+pip install black matplotlib pygraphviz faker networkx
 ```
 """
 
@@ -84,13 +87,17 @@ A.add_subgraph(internal_nodes, rank="same")
 A.add_subgraph(leaf_nodes, rank="same")
 
 # Create a table subgraph
-SG = A.add_subgraph([f"Entry{i}" for i in range(len(table))], name="cluster_0")
-SG.graph_attr["rank"] = "same"
+table_nodes = [f"{entry[0]}: {entry[1]}\n{entry[2]}" for entry in table]
+table_nodes = ["asdasdasdas" for entry in table]
+SG = A.add_subgraph(table_nodes, name="table_data")
+# SG = A.add_subgraph([f"{entry[0]}: {entry[1]}\n{entry[2]}" for i in range(len(table))], name="table_data")
+# SG.graph_attr["rank"] = "same"
 # SG.graph_attr["color"] = "white"  # to make the subgraph boundary invisible
 
-for i, entry in enumerate(table):
-    node_label = f"{entry[0]}: {entry[1]}\n{entry[2]}"
-    G.add_node(f"Entry{i}", label=node_label, shape="rectangle")
+# for i, entry in enumerate(table):
+#     node_label = f"{entry[0]}: {entry[1]}\n{entry[2]}"
+#     # G.add_node(f"Entry{i}", label=node_label, shape="rectangle")
+#     G.add_node("node_label", label="node_label", shape="rectangle")
 
 # Add edges between table entries
 table_edges = [(f"Entry{i}", f"Entry{i+1}") for i in range(len(table) - 1)]

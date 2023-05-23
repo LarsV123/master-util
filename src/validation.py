@@ -149,6 +149,9 @@ def reset_validity_tables(conn: Connector):
     log.info("Finished resetting validity test tables.")
 
 
+# This is unfinished, disable linter warnings for now
+# flake8: noqa
+# mypy: ignore-errors
 def find_collation_differences(
     connection1: Connector, connection2: Connector, collation1: str, collation2: str
 ) -> list:
