@@ -18,8 +18,9 @@ set -o pipefail
 # with the mysql-server folder at ~/mysql/mysql-server
 
 # Create a directory for boost if it does not exist
-mkdir -p ~/mysql/boost
-if [ ! -d "~/mysql/boost" ]; then
+BOOST_FOLDER=~/mysql/boost
+mkdir -p $BOOST_FOLDER
+if [ ! -d $BOOST_FOLDER ]; then
   echo "Error: ~/mysql/boost does not exist."
   exit 1
 fi
@@ -27,7 +28,7 @@ fi
 DATA_DIR=~/mysql/mysql-data
 # Create the data directory if it does not exist
 mkdir -p $DATA_DIR
-if [ ! -d "$DATA_DIR" ]; then
+if [ ! -d $DATA_DIR ]; then
   echo "Error: $DATA_DIR does not exist."
   exit 1
 fi
@@ -59,14 +60,14 @@ while getopts "b:t:d" opt; do
   esac
 done
 
-if [ -z "$BUILD_DIR" ]; then
+if [ -z $BUILD_DIR ]; then
   echo "Error: BUILD_DIR must be specified with -b option."
   exit 1
 fi
 
 # Create build folder (no error if it already exists)
 mkdir -p $BUILD_DIR
-if [ ! -d "$BUILD_DIR" ]; then
+if [ ! -d $BUILD_DIR ]; then
   echo "Error: $BUILD_DIR does not exist."
   exit 1
 fi
@@ -76,7 +77,7 @@ echo "Building MySQL in folder: $PWD"
 
 echo "Running cmake"
 
-if [ "$DEBUG_BUILD" = true ]; then
+if [ $DEBUG_BUILD = true ]; then
   CMAKE_BUILD_TYPE="-DWITH_DEBUG=1 \
                     -DWITH_ASAN=1 \
                     -DMYSQL_MAINTAINER_MODE=1 \
