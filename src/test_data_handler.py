@@ -57,7 +57,7 @@ def insert_locale_data(locale: str):
     table_name = f"country_list_{locale}"
 
     log.debug(f"Truncating table {table_name}")
-    conn.cursor.execute(f"TRUNCATE TABLE {table_name};")
+    conn.cursor.execute(f"TRUNCATE TABLE IF EXISTS {table_name};")
 
     log.debug(f"Inserting data for {locale=}")
     statement = f"""
