@@ -222,7 +222,7 @@ def validity_tests():
     """Check that pairs of collations produce the same results."""
     conn = Connector()
 
-    table = "country_list_no_NO"
+    table = "country_list_nb_NO"
     collations = [
         ("utf8mb4_nb_icu_ai_ci", "utf8mb4_nb_0900_ai_ci"),
         ("utf8mb4_us_icu_ai_ci", "utf8mb4_0900_ai_ci"),

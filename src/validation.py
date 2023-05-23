@@ -113,42 +113,6 @@ def validate_collations(
     return True
 
 
-def reset_validity_tables(conn: Connector):
-    """Reset the tables used for the validity test."""
-
-    # Truncate data tables
-    log.info("Truncating tables used for validity tests...")
-    conn.cursor.execute("TRUNCATE TABLE test_strings;")
-    conn.cursor.execute("TRUNCATE TABLE unicode_characters;")
-
-    # Insert all valid Unicode characters
-    unicode = create_unicode_tuples()
-    log.info(f"Inserting {len(unicode)} Unicode characters into the database...")
-    statement = """
-    -- sql
-    INSERT INTO unicode_characters (code_point, hex_value, char_value)
-    VALUES (%s, %s, %s);
-    """
-    failures = []
-    for i in tqdm(range(0, len(unicode))):
-        try:
-            conn.cursor.execute(statement, unicode[i])
-        except Exception as e:
-            log.debug(e)
-            failures.append(unicode[i])
-    log.info(f"Failed to insert {len(failures)} of {len(unicode)} characters.")
-
-    # Insert test strings (2-character permutations of the Latin alphabet)
-    strings = create_test_strings()
-    log.info(f"Inserting {len(strings)} test strings into the database...")
-    statement = "INSERT INTO test_strings (string) VALUES (%s);"
-    for i in tqdm(range(0, len(strings))):
-        conn.cursor.execute(statement, (strings[i],))
-
-    conn.connection.commit()
-    log.info("Finished resetting validity test tables.")
-
-
 # This is unfinished, disable linter warnings for now
 # flake8: noqa
 # mypy: ignore-errors
@@ -218,7 +182,7 @@ def get_test_data(connection: Connector, collation: str) -> list[str]:
     Retrieve the list of test strings from the database, ordered by the given
     collation.
     """
-    tables = ["test_strings", "unicode_characters"]
+    tables = ["sample_strings", "unicode_characters"]
     for t in tables:
         log.debug(f"Counting rows in {t}...")
         connection.cursor.execute(f"SELECT COUNT(*) FROM {t};")
@@ -230,7 +194,7 @@ def get_test_data(connection: Connector, collation: str) -> list[str]:
     query = f"""
     -- sql
     SELECT s FROM (
-        SELECT string AS s FROM test_strings
+        SELECT string AS s FROM sample_strings
         UNION
         SELECT char_value AS s FROM unicode_characters
     ) AS t
@@ -241,35 +205,3 @@ def get_test_data(connection: Connector, collation: str) -> list[str]:
     log.debug(f"Fetched {len(strings)} strings from the database.")
     assert len(strings) > 0
     return strings
-
-
-def create_test_strings() -> list[str]:
-    """
-    Create a list of additional strings to be used when comparing collations.
-    For the purposes of this test, this is just a list of 2-character
-    permutations of the Latin alphabet.
-    """
-    alphabet = "abcdefghijklmnopqrstuvwxyz"
-    strings = []
-    for i in alphabet:
-        for j in alphabet:
-            strings.append(i + j)
-    return strings
-
-
-def create_unicode_tuples() -> list[tuple[int, str, str]]:
-    """
-    Create a list of tuples of all characters in the Unicode range.
-    Each tuple is on the form (codepoint, hex value of codepoint, character).
-    """
-    tuples: list[tuple[int, str, str]] = []
-
-    for i in range(0, 0x10FFFF):
-        try:
-            char = chr(i)
-            tuples.append((i, str(hex(i)), char))
-        except ValueError:
-            # Some code points in the range are not valid Unicode characters
-            pass
-    log.info(f"Created {len(tuples)} Unicode characters.")
-    return tuples

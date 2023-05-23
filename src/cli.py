@@ -2,14 +2,11 @@ import click
 import logging
 from utils.custom_logger import log
 from db import Connector
-from test_data_handler import (
-    insert_all_locale_data,
-    create_test_tables,
-)
+from utils.initialize import prepare_performance_benchmarks, prepare_validity_tests
 from benchmarks import performance_benchmark, report_results
 import utils.experiment_logger as experiment_logger
 from perf_utils import perf_load_test
-from validation import reset_validity_tables, validate_collations
+from validation import validate_collations
 
 
 @click.group()
@@ -39,21 +36,9 @@ def test():
 
 @cli.command()
 def init():
-    """
-    Set up tables with test data for all locales.
-    This is based on the country-list repo.
-    This should only be run once.
-    """
-    log.debug("Inserting test data for all locales...")
-    insert_all_locale_data()
-
-
-@cli.command()
-def setup_perf():
-    """Set up synthetic data for a quick test"""
-    log.info("Creating synthetic test data...")
-    create_test_tables()
-    log.info("Finished creating synthetic test data.")
+    """Set up tables with required test data for all experiments."""
+    prepare_performance_benchmarks()
+    prepare_validity_tests()
 
 
 @cli.command()
@@ -94,16 +79,6 @@ def report():
 def stresstest(collation: str):
     """Run benchmarks using ICU collation, to produce data for perf."""
     perf_load_test(collation)
-
-
-@cli.command()
-def setup_validity():
-    """Reset and set up tables of test data for the validity test."""
-    log.info("Setting up validity test...")
-    connection = Connector()
-    reset_validity_tables(connection)
-    connection.close()
-    log.info("Finished setting up test data for validity test.")
 
 
 @cli.command()
