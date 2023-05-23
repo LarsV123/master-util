@@ -33,11 +33,12 @@ def init():
     -- sql
     CREATE TABLE IF NOT EXISTS benchmarks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ICU_FROZEN BOOLEAN NOT NULL,
+        ICU_EXTRA_TAILORING BOOLEAN NOT NULL,
         collation TEXT NOT NULL,
         locale TEXT NOT NULL,
         data_table TEXT NOT NULL,
         data_size INTEGER NOT NULL,
-        tailoring_size INTEGER NOT NULL,
         order_by_asc REAL NOT NULL,
         order_by_desc REAL NOT NULL,
         equals REAL NOT NULL,
@@ -56,22 +57,24 @@ def log_benchmark(result: dict):
     -- sql
     INSERT INTO
     benchmarks (
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING,
         collation,
         locale,
         data_table,
         data_size,
-        tailoring_size,
         order_by_asc,
         order_by_desc,
         equals
     )
     VALUES
-    (
+    (   
+        :ICU_FROZEN,
+        :ICU_EXTRA_TAILORING,
         :collation,
         :locale,
         :data_table,
         :data_size,
-        :tailoring_size,
         :order_by_asc,
         :order_by_desc,
         :equals
@@ -89,9 +92,10 @@ def get_results():
     -- sql
     SELECT
         collation,
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING,
         data_table,
         data_size,
-        tailoring_size,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -100,9 +104,10 @@ def get_results():
         benchmarks
     GROUP BY
         collation,
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING,
         data_table,
-        data_size,
-        tailoring_size;
+        data_size;
     """
     return db.execute(query).fetchall()
 
@@ -118,9 +123,10 @@ def get_comparison(config: dict):
     WITH cte AS (
     SELECT
         collation,
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING,
         locale,
         data_size,
-        tailoring_size,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -131,14 +137,16 @@ def get_comparison(config: dict):
         collation,
         locale,
         data_size,
-        tailoring_size
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING
     )
     SELECT
         cte1.collation AS icu,
         cte2.collation AS mysql,
         cte1.locale,
         cte1.data_size,
-        cte1.tailoring_size,
+        cte1.ICU_FROZEN,
+        cte1.ICU_EXTRA_TAILORING,
         ROUND(
             100.0 * (cte1.order_by_asc - cte2.order_by_asc) / cte2.order_by_asc,
             2
@@ -159,11 +167,13 @@ def get_comparison(config: dict):
         AND cte2.collation = :mysql
         AND cte1.locale = :locale
         AND cte1.data_size = cte2.data_size
-        AND cte1.tailoring_size = cte2.tailoring_size
+        AND cte1.ICU_FROZEN = cte2.ICU_FROZEN
+        AND cte1.ICU_EXTRA_TAILORING = cte2.ICU_EXTRA_TAILORING
     ORDER BY
         cte1.locale,
         cte1.data_size,
-        cte1.tailoring_size;
+        cte1.ICU_FROZEN,
+        cte1.ICU_EXTRA_TAILORING;
     """
     return db.execute(query, config).fetchall()
 
