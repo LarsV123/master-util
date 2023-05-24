@@ -77,14 +77,16 @@ COLLATIONS = [
 ]
 
 
-def performance_benchmark(iterations: int, ICU_FROZEN: bool, ICU_EXTRA_TAILORING: bool):
+def performance_benchmark(
+    iterations: int, ICU_FROZEN: bool, ICU_EXTRA_TAILORING: bool, include_mysql: bool
+):
     """
     Run a performance benchmark comparing different collations.
     Each configuration is run `iterations + 1` times, where the first
     is a "warm-up" run which is not logged.
 
-    The `tailoring_size` parameter refers to the number of tailoring rules
-    added to the collation when compiling MySQL.
+    If the `include_mysql` flag is set, the benchmark will also run
+    the same tests using the nearest equivalent MySQL collations.
     """
     conn = Connector()
     experiment_logger.init()
@@ -111,7 +113,7 @@ def performance_benchmark(iterations: int, ICU_FROZEN: bool, ICU_EXTRA_TAILORING
                 )
             done[locale].append(collation["icu"])
 
-        if collation["mysql"] not in done[locale]:
+        if include_mysql and collation["mysql"] not in done[locale]:
             for size in DATASET_SIZES:
                 configurations.append(
                     {

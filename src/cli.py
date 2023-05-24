@@ -58,7 +58,10 @@ def init(perf: bool, valid: bool):
     is_flag=True,
     help="Reset the log database before running the test.",
 )
-def perf(iterations: int, reset: bool):
+@click.option(
+    "-m", "--mysql", is_flag=True, help="Include MySQL collations in the benchmark."
+)
+def perf(iterations: int, reset: bool, mysql: bool):
     """
     Runs a set of performance benchmarks.
     Results are logged to an SQLite database.
@@ -80,7 +83,9 @@ def perf(iterations: int, reset: bool):
         default="false",
     )
 
-    performance_benchmark(iterations, ICU_FROZEN, ICU_EXTRA_TAILORING)
+    performance_benchmark(
+        iterations, ICU_FROZEN, ICU_EXTRA_TAILORING, include_mysql=mysql
+    )
 
 
 @cli.command()
