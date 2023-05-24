@@ -32,6 +32,7 @@ def prepare_performance_benchmarks():
     for locale in LOCALES:
         log.info(f"Preparing data for {locale=}")
         create_base_locale_table(conn, locale)
+        fill_base_locale_table(conn, locale)
         for size in DATASET_SIZES:
             log.info(f"Preparing data for {locale=} and {size=}")
             create_expanded_locale_table(conn, locale, size)
@@ -71,9 +72,7 @@ def create_base_locale_table(conn: Connector, locale: str):
         id VARCHAR(64) NOT NULL,
         value VARCHAR(64) NOT NULL,
         PRIMARY KEY(id)
-        )
-    DEFAULT CHARACTER SET utf8mb4
-    COLLATE utf8mb4_0900_ai_ci;
+        );
     """
     conn.cursor.execute(statement)
     conn.connection.commit()
