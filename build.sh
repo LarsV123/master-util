@@ -124,7 +124,7 @@ fi
 echo "Done building MySQL"
 
 PATH="~/mysql/${BUILD_DIR}/runtime_output_directory"
-SERVER_OPTIONS="--datadir=${DATA_DIR} --port=3306 --sort_buffer_size=1024M --innodb_buffer_pool_size=1024M"
+SERVER_OPTIONS="--datadir=${DATA_DIR} --port=3306 --sort_buffer_size=2048M --innodb_buffer_pool_size=2048M"
 INIT_SERVER="${PATH}/mysqld ${SERVER_OPTIONS} --initialize-insecure"
 RUN_SERVER="${PATH}/mysqld ${SERVER_OPTIONS}"
 RUN_CLIENT="${PATH}/mysql -uroot"
