@@ -141,10 +141,6 @@ pip install -r requirements.txt
 
 # Check that a MySQL server is running and that we have access to it
 python src/cli.py -v test
-
-# Initialize migrations
-python src/migrate.py init
-python src/migrate.py up
 ```
 
 ## Development
@@ -168,19 +164,13 @@ These include performance benchmarks, validation tests and profiling.
 ### Setup
 
 ```bash
-# Optional: Create aliases for the CLI tools
+# Optional: Create alias for the CLI tool
 echo 'alias cli="python ~/mysql/src/cli.py"' >> ~/.bashrc
-echo 'alias migrate="python ~/mysql/src/migrate.py"' >> ~/.bashrc
 source ~/.bashrc
 
 # Test the CLI
 cli --help
 cli -v test
-
-# Run migrations
-migrate --help
-migrate make
-migrate up
 
 # Insert test data
 cli init
@@ -234,9 +224,6 @@ the original collation and one with the new collation, and then running a set
 of queries on both servers and comparing the results.
 
 ```bash
-# Prepare test data for the validity test (run once before running the test)
-cli setup-validity
-
 # Compare the ICU and MySQL versions of the same collation (will fail, as they differ):
 cli validate -p1 3306 -p2 3306 -c1 "utf8mb4_icu_nb_NO_ai_ci" -c2 "utf8mb4_nb_0900_ai_ci"
 
