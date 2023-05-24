@@ -35,27 +35,30 @@ def test():
 
 
 @cli.command()
-def init():
+@click.option("-p", "--perf", default=True, help="Initialize performance benchmarks.")
+@click.option("-v", "--valid", default=True, help="Initialize validity tests.")
+def init(perf: bool, valid: bool):
     """Set up tables with required test data for all experiments."""
-    prepare_performance_benchmarks()
-    prepare_validity_tests()
+    log.info("Initializing database...")
+
+    log.debug(f"Initializing performance benchmarks: {perf}")
+    if perf:
+        prepare_performance_benchmarks()
+
+    log.debug(f"Initializing validity tests: {valid}")
+    if valid:
+        prepare_validity_tests()
 
 
 @cli.command()
 @click.option("-i", "--iterations", default=3, help="Number of times to run the test.")
-@click.option(
-    "-d",
-    "--delta",
-    required=True,
-    help="Number of tailoring rules added to the ICU collations as a prefix.",
-)
 @click.option(
     "-r",
     "--reset",
     is_flag=True,
     help="Reset the log database before running the test.",
 )
-def perf(iterations: int, delta: int, reset: bool):
+def perf(iterations: int, reset: bool):
     """
     Runs a set of performance benchmarks.
     Results are logged to an SQLite database.
@@ -64,8 +67,20 @@ def perf(iterations: int, delta: int, reset: bool):
         log.info("Resetting the log database...")
         experiment_logger.reset()
     log.info("Running performance benchmarks...")
-    log.info("Running a simplified set of performance benchmarks...")
-    performance_benchmark(iterations, delta)
+
+    # Prompt user for ICU_FROZEN boolean
+    ICU_FROZEN = click.prompt(
+        "What is the value of ICU_FROZEN? (true/false)", type=bool, default="false"
+    )
+
+    # Prompt user for ICU_EXTRA TAILORING boolean
+    ICU_EXTRA_TAILORING = click.prompt(
+        "What is the value of ICU_EXTRA_TAILORING? (true/false)",
+        type=bool,
+        default="false",
+    )
+
+    performance_benchmark(iterations, ICU_FROZEN, ICU_EXTRA_TAILORING)
 
 
 @cli.command()

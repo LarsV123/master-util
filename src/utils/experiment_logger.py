@@ -92,10 +92,10 @@ def get_results():
     -- sql
     SELECT
         collation,
-        ICU_FROZEN,
-        ICU_EXTRA_TAILORING,
         data_table,
         data_size,
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING,
         ROUND(AVG(order_by_asc), 3) AS order_by_asc,
         ROUND(AVG(order_by_desc), 3) AS order_by_desc,
         ROUND(AVG(equals), 3) AS equals,
@@ -104,10 +104,10 @@ def get_results():
         benchmarks
     GROUP BY
         collation,
-        ICU_FROZEN,
-        ICU_EXTRA_TAILORING,
         data_table,
-        data_size;
+        data_size,
+        ICU_FROZEN,
+        ICU_EXTRA_TAILORING;
     """
     return db.execute(query).fetchall()
 

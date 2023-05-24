@@ -3,6 +3,7 @@ from db import Connector
 from utils.custom_logger import log
 from utils.profile import get_runtime
 from utils import experiment_logger
+from utils.initialize import DATASET_SIZES
 from tabulate import tabulate
 from tqdm import tqdm
 
@@ -75,11 +76,8 @@ COLLATIONS = [
     },
 ]
 
-# The sizes of dataset we actually test
-DATASET_SIZES = [1_000_000]
 
-
-def performance_benchmark(iterations: int, tailoring_size: int):
+def performance_benchmark(iterations: int, ICU_FROZEN: bool, ICU_EXTRA_TAILORING: bool):
     """
     Run a performance benchmark comparing different collations.
     Each configuration is run `iterations + 1` times, where the first
@@ -107,7 +105,8 @@ def performance_benchmark(iterations: int, tailoring_size: int):
                         "locale": locale,
                         "data_table": f"test_{locale}_{size}",
                         "data_size": size,
-                        "tailoring_size": tailoring_size,
+                        "ICU_FROZEN": ICU_FROZEN,
+                        "ICU_EXTRA_TAILORING": ICU_EXTRA_TAILORING,
                     }
                 )
             done[locale].append(collation["icu"])
@@ -120,7 +119,8 @@ def performance_benchmark(iterations: int, tailoring_size: int):
                         "locale": locale,
                         "data_table": f"test_{locale}_{size}",
                         "data_size": size,
-                        "tailoring_size": tailoring_size,
+                        "ICU_FROZEN": ICU_FROZEN,
+                        "ICU_EXTRA_TAILORING": ICU_EXTRA_TAILORING,
                     }
                 )
             done[locale].append(collation["mysql"])
@@ -162,7 +162,8 @@ def report_results():
                 "Collation",
                 "Data set",
                 "Data size",
-                "Tailoring size",
+                "ICU_FROZEN",
+                "ICU_EXTRA_TAILORING",
                 "Order by (ASC)",
                 "Order by (DESC)",
                 "Equals",
@@ -186,7 +187,8 @@ def report_results():
                 "MySQL collation",
                 "Locale",
                 "Data size",
-                "Tailoring size",
+                "ICU_FROZEN",
+                "ICU_EXTRA_TAILORING",
                 "ASC slowdown (%)",
                 "DESC slowdown (%)",
                 "Equals slowdown (%)",
