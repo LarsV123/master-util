@@ -284,7 +284,7 @@ def benchmark_order_by(db: Connector, table: str, collation: str, ascending: boo
     direction = "ASC" if ascending else "DESC"
     query = f"""
     -- sql
-    SELECT * FROM my_project.{table}
+    SELECT * FROM {table}
     ORDER BY value COLLATE {collation}
     {direction} LIMIT 1;
     """
@@ -302,7 +302,7 @@ def benchmark_order_by(db: Connector, table: str, collation: str, ascending: boo
 
 def benchmark_equals(db: Connector, table: str, collation: str):
     query = f"""
-    SELECT * FROM my_project.{table}
+    SELECT * FROM {table}
     WHERE value = 'Norge123' COLLATE {collation};
     """
     log.debug(f"{query=}")
