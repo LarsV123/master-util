@@ -159,7 +159,7 @@ def create_unicode_tuples() -> list[tuple[int, str, str]]:
     """
     tuples: list[tuple[int, str, str]] = []
 
-    for i in range(0, 0x10FFFF):
+    for i in range(0, 0x10FFFF + 1):
         try:
             char = chr(i)
             tuples.append((i, str(hex(i)), char))
