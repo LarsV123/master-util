@@ -78,11 +78,13 @@ echo "Building MySQL in folder: $PWD"
 echo "Running cmake"
 
 if [ $DEBUG_BUILD = true ]; then
+  echo "Building in debug mode"
   CMAKE_BUILD_TYPE="-DWITH_DEBUG=1 \
                     -DWITH_ASAN=1 \
                     -DMYSQL_MAINTAINER_MODE=1 \
                     -DCMAKE_BUILD_TYPE=Debug"
 else
+  echo "Building in release mode"
   CMAKE_BUILD_TYPE="-DWITH_DEBUG=0 \
                     -DWITH_ASAN=0"
 fi
