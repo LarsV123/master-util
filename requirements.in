@@ -7,6 +7,9 @@ types-tabulate
 
 rich
 
+# Plotting
+seaborn
+
 # Progress bar
 tqdm
 types-tqdm

@@ -20,3 +20,6 @@ mysql-data
 # MySQL builds (compiled locally)
 debug-build
 release-build
+
+# Generated plots
+plots

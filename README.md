@@ -154,6 +154,7 @@ black src
 
 # Update the requirements files if dependencies have changed
 pip-compile requirements.in --resolver=backtracking
+pip install -r requirements.txt
 ```
 
 ## Running experiments
