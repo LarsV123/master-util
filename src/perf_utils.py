@@ -1,28 +1,38 @@
-from benchmarks import test_collation
 from utils.custom_logger import log
 from db import Connector
-from tqdm import tqdm
+from utils.profile import get_runtime
 
 """
 Util functions for performance testing with perf.
 """
 
 
-def perf_load_test(collation: str):
+def load_test(collation: str, iterations: int):
     """
-    Run simplified performance benchmarks to provide data for
-    perf.
+    Run a simplified performance benchmark, checking execution time for an
+    ORDER BY query against a single table.
+    This can be used to generate data for perf.
     """
-    configuration = {
-        "collation": collation,
-        "locale": "en_US",
-        "data_table": "test_en_US_10000000",
-        "data_size": 0,
-        "tailoring_size": 0,
-    }
-
-    log.info("Running stresstest...")
+    log.info("Running load test with ORDER BY query")
     conn = Connector()
-    for _ in tqdm(range(3)):
-        test_collation(conn, configuration)
-    log.info("Finished running stresstest.")
+    table = "test_en_US_1000000"
+    log.info(f"Table: {table} | Collation: {collation}")
+
+    query = f"""
+    -- sql
+    SELECT * FROM {table}
+    ORDER BY value COLLATE {collation}
+    LIMIT 1;
+    """
+
+    @get_runtime
+    def timed_query():
+        conn.cursor.execute(query)
+
+    log.info(
+        f"Running {iterations} iterations of the same ORDER_BY query on collation {collation}"
+    )
+    for _ in range(iterations):
+        runtime = timed_query()
+        log.info(f"Query took {runtime:.2f} seconds")
+        conn.cursor.fetchall()

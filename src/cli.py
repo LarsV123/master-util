@@ -3,9 +3,9 @@ import logging
 from utils.custom_logger import log
 from db import Connector
 from utils.initialize import prepare_performance_benchmarks, prepare_validity_tests
-from benchmarks import performance_benchmark, report_results, sanity_test
+from benchmarks import performance_benchmark, report_results
 import utils.experiment_logger as experiment_logger
-from perf_utils import perf_load_test
+from perf_utils import load_test
 from validation import validate_collations
 
 
@@ -35,11 +35,20 @@ def test():
 
 
 @cli.command()
-def sanity():
-    """Run sanity checks on the database."""
-    log.info("Running sanity checks...")
-    sanity_test("utf8mb4_icu_en_US_ai_ci")
-    sanity_test("utf8mb4_0900_ai_ci")
+@click.option("-c", "--collation", default="utf8mb4_icu_en_US_ai_ci")
+@click.option("-i", "--iterations", default=3, help="Number of times to run the test.")
+@click.option(
+    "-t", "--test-all", is_flag=True, help="Run a set of tests on various collations"
+)
+def stresstest(collation: str, iterations: int, test_all: bool):
+    """Run benchmarks using ICU collation, to produce data for perf."""
+    if test_all:
+        load_test("utf8mb4_icu_en_US_ai_ci", iterations)
+        load_test("utf8mb4_0900_ai_ci", iterations)
+        load_test("utf8mb4_icu_ja_JP_as_cs_ks", iterations)
+        load_test("utf8mb4_ja_0900_as_cs_ks", iterations)
+    else:
+        load_test(collation, iterations)
 
 
 @cli.command()
@@ -100,13 +109,6 @@ def perf(iterations: int, reset: bool, mysql: bool):
 def report():
     """Report results from performance benchmarks."""
     report_results()
-
-
-@cli.command()
-@click.option("-c", "--collation", default="utf8mb4_icu_en_US_ai_ci")
-def stresstest(collation: str):
-    """Run benchmarks using ICU collation, to produce data for perf."""
-    perf_load_test(collation)
 
 
 @cli.command()
