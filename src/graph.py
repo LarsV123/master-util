@@ -122,6 +122,8 @@ def create_plot(metric: str, groups: list[dict]):
     latex_subplots = []
     plot_filename = f"experiment1_{metric}"
     plot_label = f"experiment1_{metric}"
+
+    # flake8: noqa (this line just needs to be a long, single line)
     plot_caption = f"Comparing execution time for the {metric_names[metric]} operation across various collations. Lower execution time is better. Error bars show standard deviation. These collations are all accent-, case- and (where applicable) kana-insensitive"
 
     for group in COLLATIONS:
