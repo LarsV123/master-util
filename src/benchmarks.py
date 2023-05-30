@@ -256,3 +256,33 @@ def benchmark_equals(db: Connector, table: str, collation: str):
     runtime = timed_equals()
     db.cursor.fetchall()
     return runtime
+
+
+def sanity_test(collation: str):
+    """Run a quick query to check execution speed."""
+    conn = Connector()
+    table = "test_en_US_1000000"
+    query = f"SELECT COUNT(*) FROM {table}"
+    conn.cursor.execute(query)
+    count = conn.cursor.fetchone()[0]
+    log.info(f"Table {table} has {count:,} rows")
+
+    query = f"""
+    -- sql
+    SELECT * FROM {table}
+    ORDER BY value COLLATE {collation}
+    LIMIT 1;
+    """
+
+    @get_runtime
+    def timed_equals():
+        conn.cursor.execute(query)
+
+    n = 3
+    log.info(
+        f"Running {n} iterations of the same ORDER_BY query on collation {collation}"
+    )
+    for _ in range(n):
+        runtime = timed_equals()
+        log.info(f"Query took {runtime:.2f} seconds")
+        conn.cursor.fetchall()

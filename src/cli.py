@@ -3,7 +3,7 @@ import logging
 from utils.custom_logger import log
 from db import Connector
 from utils.initialize import prepare_performance_benchmarks, prepare_validity_tests
-from benchmarks import performance_benchmark, report_results
+from benchmarks import performance_benchmark, report_results, sanity_test
 import utils.experiment_logger as experiment_logger
 from perf_utils import perf_load_test
 from validation import validate_collations
@@ -32,6 +32,14 @@ def test():
     conn = Connector()
     conn.close()
     log.info("Successfully connected to database.")
+
+
+@cli.command()
+def sanity():
+    """Run sanity checks on the database."""
+    log.info("Running sanity checks...")
+    sanity_test("utf8mb4_icu_en_US_ai_ci")
+    sanity_test("utf8mb4_0900_ai_ci")
 
 
 @cli.command()
