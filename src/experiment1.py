@@ -1,5 +1,5 @@
 """
-This file is to be used for creating plots/graphs from the performance benchmark.
+This file is used for creating plots/graphs/tables from the performance benchmark.
 Copy the SQLite database from the test bench computer and rename it to
 "final_results.db" before running this file.
 """
