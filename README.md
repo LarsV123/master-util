@@ -217,29 +217,29 @@ perf script | ./stackcollapse-perf.pl > out.perf-folded
 ./flamegraph.pl out.perf-folded > utf8mb4_icu_en_US_ai_ci.svg # or: utf8mb4_0900_ai_ci.svg
 ```
 
-The flamegraphs in the report were generated like this:
+The flamegraphs in the report were generated using a bash script, which is included.
 
 ```bash
-# Build MySQL server with ICU_frozen config and start it
-~/mysql/release-build/runtime_output_directory/mysqld --datadir=<user_directory>/mysql/mysql-data --sort_buffer_size=2048M --innodb_buffer_pool_size=2048M
+# Build MySQL server with ICU_frozen config
+# This means setting these values in mysql-server/strings/ctype-icu.h
+# ICU_FROZEN=true
+# ICU_EXTRA_TAILORING=false
+bash build.sh -b "build-frozen"
 
-cd ~/mysql/src/FlameGraph
+# Start it
+~/mysql/build-frozen/runtime_output_directory/mysqld --datadir=<user_directory>/mysql/mysql-data --sort_buffer_size=2048M --innodb_buffer_pool_size=2048M
 
-# Run this before each test
-perf record -p <pid> -F 4000 -g -- sleep 30
+# Start client (from separate terminal)
+~/mysql/build-frozen/runtime_output_directory/mysql -uroot
 
-# Run this after each test
-perf script | ./stackcollapse-perf.pl > out.perf-folded
-./flamegraph.pl out.perf-folded > <collation>.svg
+# Find PID of mysqld process
+ps aux | grep mysqld
 
-# Warm-up run
-cli stresstest --test-all -i 1
-
-# List of tests to run
-cli stresstest -c utf8mb4_icu_en_US_ai_ci
-cli stresstest -c utf8mb4_0900_ai_ci
-cli stresstest -c utf8mb4_icu_ja_JP_as_cs_ks
-cli stresstest -c utf8mb4_ja_0900_as_cs_ks
+# Run series of tests to generate flamegraphs as .svg files
+bash perf.sh -p <pid> -c utf8mb4_icu_en_US_ai_ci
+bash perf.sh -p <pid> -c utf8mb4_0900_ai_ci
+bash perf.sh -p <pid> -c utf8mb4_icu_ja_JP_as_cs_ks
+bash perf.sh -p <pid> -c utf8mb4_ja_0900_as_cs_ks
 ```
 
 ### Validation tests
