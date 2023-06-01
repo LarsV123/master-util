@@ -5,7 +5,7 @@ from db import Connector
 from utils.initialize import prepare_performance_benchmarks, prepare_validity_tests
 from benchmarks import performance_benchmark, report_results
 import utils.experiment_logger as experiment_logger
-from perf_utils import load_test
+from experiment2 import load_test
 from validation import validate_collations
 
 
