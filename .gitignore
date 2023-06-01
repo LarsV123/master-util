@@ -20,6 +20,9 @@ mysql-data
 # MySQL builds (compiled locally)
 debug-build
 release-build
+build-locale
+build-frozen
+build-tailoring
 
 # Generated plots
 plots
