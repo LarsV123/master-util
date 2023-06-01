@@ -3,6 +3,7 @@
 # Initialize variables
 collation=""
 pid=""
+locale=""
 
 # Define usage function
 usage() {
@@ -14,13 +15,16 @@ usage() {
 }
 
 # Parse command line arguments
-while getopts "c:p:h" opt; do
+while getopts "c:p:l:h" opt; do
   case ${opt} in
   c)
     collation=${OPTARG}
     ;;
   p)
     pid=${OPTARG}
+    ;;
+  l)
+    locale=${OPTARG}
     ;;
   h)
     usage
@@ -39,9 +43,9 @@ while getopts "c:p:h" opt; do
   esac
 done
 
-# Check that both parameters are present
-if [[ -z $collation || -z $pid ]]; then
-  echo "Error: both COLLATION (-c) and PID (-p) parameters are required." >&2
+# Check that all parameters are present
+if [[ -z $collation || -z $pid || -z $locale ]]; then
+  echo "Error: All parameters are required." >&2
   usage
   exit 1
 fi
@@ -50,6 +54,7 @@ fi
 print_input_variables() {
   echo "COLLATION: $collation"
   echo "PID: $pid"
+  echo "LOCALE: $locale"
 }
 
 # Define background processing function
@@ -57,6 +62,7 @@ background_processing() {
   echo "Running background processing with parameters:"
   echo "  COLLATION: $collation"
   echo "  PID: $pid"
+  echo "  LOCALE: $locale"
   perf record -p $pid -F 4000 -g -- sleep 30
   perf script | ~/mysql/flamegraph/stackcollapse-perf.pl >out.perf-folded
   ~/mysql/flamegraph/flamegraph.pl out.perf-folded >"${collation}.svg"
@@ -67,13 +73,13 @@ background_processing() {
 print_input_variables
 
 # Do a warm-up run first, so the collation is loaded into memory
-python3 ~/mysql/src/cli.py stresstest -c $collation -i 1
+python3 ~/mysql/src/cli.py stresstest -c $collation -l $locale -i 1
 
 # Run background processing in a separate thread
 background_processing &
 
 # Generate data for perf to record
-python3 ~/mysql/src/cli.py stresstest -c $collation
+python3 ~/mysql/src/cli.py stresstest -c $collation -l $locale
 
 # Wait for background processing to complete
 wait

@@ -38,17 +38,33 @@ def test():
 @click.option("-c", "--collation", default="utf8mb4_icu_en_US_ai_ci")
 @click.option("-i", "--iterations", default=3, help="Number of times to run the test.")
 @click.option(
-    "-t", "--test-all", is_flag=True, help="Run a set of tests on various collations"
+    "-t", "--test-all", is_flag=True, help="Run a set of tests on various collations."
 )
-def stresstest(collation: str, iterations: int, test_all: bool):
+@click.option(
+    "-l", "--locale", default="en_US", help="Locale to use for the test data."
+)
+def stresstest(collation: str, iterations: int, test_all: bool, locale: str):
     """Run benchmarks using ICU collation, to produce data for perf."""
     if test_all:
-        load_test("utf8mb4_icu_en_US_ai_ci", iterations)
-        load_test("utf8mb4_0900_ai_ci", iterations)
-        load_test("utf8mb4_icu_ja_JP_as_cs_ks", iterations)
-        load_test("utf8mb4_ja_0900_as_cs_ks", iterations)
+        collations = [
+            "utf8mb4_icu_en_US_ai_ci",
+            "utf8mb4_icu_en_US_as_cs",
+            "utf8mb4_icu_nb_NO_ai_ci",
+            "utf8mb4_icu_fr_FR_ai_ci",
+            "utf8mb4_icu_zh_Hans_as_cs",
+            "utf8mb4_icu_ja_JP_as_cs",
+            "utf8mb4_icu_ja_JP_as_cs_ks",
+            "utf8mb4_0900_ai_ci",
+            "utf8mb4_0900_as_cs",
+            "utf8mb4_nb_0900_ai_ci",
+            "utf8mb4_zh_0900_as_cs",
+            "utf8mb4_ja_0900_as_cs",
+            "utf8mb4_ja_0900_as_cs_ks",
+        ]
+        for c in collations:
+            load_test(c, iterations, locale)
     else:
-        load_test(collation, iterations)
+        load_test(collation, iterations, locale)
 
 
 @cli.command()
