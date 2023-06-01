@@ -57,18 +57,23 @@ background_processing() {
   echo "Running background processing with parameters:"
   echo "  COLLATION: $collation"
   echo "  PID: $pid"
-  perf record -p 14147 -F 4000 -g -- sleep 30
+  perf record -p $pid -F 4000 -g -- sleep 30
+  perf script | ~/mysql/flamegraph/stackcollapse-perf.pl >out.perf-folded
+  ~/mysql/flamegraph/flamegraph.pl out.perf-folded >"${collation}.svg"
   echo "Background processing complete."
 }
 
 # Check our input variables
 print_input_variables
 
+# Do a warm-up run first, so the collation is loaded into memory
+python3 ~/mysql/src/cli.py stresstest -c $collation -i 1
+
 # Run background processing in a separate thread
 background_processing &
 
 # Generate data for perf to record
-python3 src/cli.py stresstest -c $collation
+python3 ~/mysql/src/cli.py stresstest -c $collation
 
 # Wait for background processing to complete
 wait
