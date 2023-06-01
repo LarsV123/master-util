@@ -299,18 +299,14 @@ def summarize_data() -> pd.DataFrame:
 
     # Order the data by config/col/locale
     df = df.sort_values(by=[ICU_CONFIG, "locale", "collation"])
-    pd.set_option("display.max_columns", None)
-    print(df.describe())
-    print(df.info())
-    print(df.sample(10))
     return df
 
 
 def create_latex_table(content: str, label: str, caption: str) -> str:
     """Create a LaTeX table."""
     # Remove the two first lines of the content so we can replace the header
-    content = content.split("\n")[2:]
-    content = "\n".join(content)
+    split_content = content.split("\n")[2:]
+    content = "\n".join(split_content)
 
     # \begin{{tabular}}{{llp{{2cm}}p{{2cm}}p{{2cm}}}}
     # Collation & Locale & Time (s) & Std. dev. (s) & Diff. from baseline (\%) \\\\
@@ -333,7 +329,7 @@ def create_latex_table(content: str, label: str, caption: str) -> str:
     return table
 
 
-def filter_asc_table(df: pd.DataFrame) -> pd.DataFrame:
+def filter_asc_table(df: pd.DataFrame) -> str:
     """Filter the data to only include the order by asc section."""
     # Rename columns to human readable format
     C1 = "thead{Execution // time (s)}"
@@ -361,7 +357,7 @@ def filter_asc_table(df: pd.DataFrame) -> pd.DataFrame:
     return tabulate(df_asc, tablefmt="latex_booktabs")
 
 
-def filter_desc_table(df: pd.DataFrame):
+def filter_desc_table(df: pd.DataFrame) -> str:
     """Filter the data to only include the order by desc section."""
     # Rename columns to human readable format
     df = df.rename(
@@ -388,7 +384,7 @@ def filter_desc_table(df: pd.DataFrame):
     return tabulate(df_desc, tablefmt="latex_booktabs")
 
 
-def filter_equals_table(df: pd.DataFrame):
+def filter_equals_table(df: pd.DataFrame) -> str:
     """Filter the data to only include the equals section."""
     # Rename columns to human readable format
     df = df.rename(
