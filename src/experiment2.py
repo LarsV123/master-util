@@ -1,7 +1,6 @@
 from utils.custom_logger import log
 from db import Connector
 from utils.profile import get_runtime
-from benchmarks import COLLATIONS
 
 """
 Util functions for performance testing with perf.
