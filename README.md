@@ -6,9 +6,8 @@ As the project requires building and running a MySQL server from source code,
 instructions to do so are also included.
 
 The instructions below are intended for my own personal use, and some steps are
-optional or may need to be adapted somewhat. For example, the instructions are
-written for Ubuntu 20.04 (running in WSL2), but it should be fairly easy to
-adapt them to other Linux distributions.
+optional or may need to be adapted somewhat to fit other uses.
+For example, the instructions were developed while working on a Windows machine running Ubuntu 20.04 in WSL2 and later reworked to work on a Linux machine running Ubuntu 22 natively.
 
 Note that the instructions and various scripts assume that the project is placed
 in the root of the user's home directory as a directory named `mysql`.
