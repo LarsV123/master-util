@@ -235,10 +235,7 @@ bash build.sh -b "build-frozen"
 ps aux | grep mysqld
 
 # Run series of tests to generate flamegraphs as .svg files
-bash perf.sh -p <pid> -c utf8mb4_icu_en_US_ai_ci
-bash perf.sh -p <pid> -c utf8mb4_0900_ai_ci
-bash perf.sh -p <pid> -c utf8mb4_icu_ja_JP_as_cs_ks
-bash perf.sh -p <pid> -c utf8mb4_ja_0900_as_cs_ks
+bash experiment2.sh -p <pid>
 ```
 
 ### Validation tests
