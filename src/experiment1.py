@@ -2,6 +2,13 @@
 This file is used for creating plots/graphs/tables from the performance benchmark.
 Copy the SQLite database from the test bench computer and rename it to
 "final_results.db" before running this file.
+
+Debugging tricks:
+# pd.set_option("display.max_columns", None)
+# print(df.describe())
+# print(df.info())
+# print(df.sample(10))
+# print(df.columns)
 """
 import os
 import sqlite3
@@ -14,6 +21,23 @@ from tabulate import tabulate
 # Column name for the build configuration tested
 ICU_CONFIG = "Collation system"
 CONFIGURATIONS = ["MySQL", "ICU_default", "ICU_frozen", "ICU_tailored"]
+
+# Set destination folder for plots
+PLOT_DIR = os.path.join("..", "results", "experiment1")
+
+# Define common parameters for all plots
+plt.rc("font", size=14)  # controls default text sizes
+plt.rc("axes", titlesize=20)  # fontsize of the axes title
+plt.rc("axes", labelsize=16)  # fontsize of the x and y labels
+plt.rc("xtick", labelsize=14)  # fontsize of the tick labels
+plt.rc("ytick", labelsize=14)  # fontsize of the tick labels
+plt.rc("legend", fontsize=14)  # legend fontsize
+plt.rc("figure", titlesize=22)  # fontsize of the figure title
+PLOT_PARAMS = {
+    "errorbar": "sd",  # Standard deviation
+    "capsize": 0.2,  # Cap size for error bars
+    "errwidth": 3,  # Width of error bars
+}
 
 
 def identify_icu_config(row):
@@ -47,17 +71,8 @@ def parse_data() -> pd.DataFrame:
     return df_stats
 
 
-# Debugging only: show all data in the dataframe
-# pd.set_option("display.max_columns", None)
-# print(df.describe())
-# print(df.info())
-# print(df.sample(10))
-
-# Set destination folder for plots
-plot_dir = os.path.join("..", "plots", "experiment1")
-
 # Create the directory if it doesn't exist
-os.makedirs(plot_dir, exist_ok=True)
+os.makedirs(PLOT_DIR, exist_ok=True)
 
 # Map the metric to a human-readable name
 metric_names = {
@@ -78,11 +93,10 @@ locale_names = {
 
 def save_latex_plot_wrapper(name: str, label: str, caption: str, subplots: list[str]):
     """Save a .tex file with 4 subplots."""
-    print(f"{len(subplots)=}")
     assert len(subplots) == 4
 
     # Delete the file if it already exists
-    destination = os.path.join(plot_dir, f"{name}.tex")
+    destination = os.path.join(PLOT_DIR, f"{name}.tex")
     if os.path.exists(destination):
         os.remove(destination)
 
@@ -150,24 +164,17 @@ def create_plot(df: pd.DataFrame, metric: str, groups: list[dict]):
         plt.figure(figsize=(10, 6))
 
         sns.barplot(
-            x=ICU_CONFIG,
-            y=metric,
-            data=df_group,
-            estimator=np.median,
-            errorbar="sd",  # Standard deviation
-            capsize=0.2,
+            x=ICU_CONFIG, y=metric, data=df_group, estimator=np.median, **PLOT_PARAMS
         )
 
         # Add title and label
-        plt.title(
-            f"Median execution time for operation '{metric}'. Error bars show std. deviation."
-        )
+        plt.title(f"Median execution time for operation '{metric}'")
         plt.ylabel("Time (s)")
 
         # Define the destination for the plot and tex file
         file_name = f"{group['locale']}_{group['icu']}_vs_{group['mysql']}_{metric}"
         destination = os.path.join(
-            plot_dir,
+            PLOT_DIR,
             f"{file_name}.png",
         )
 
@@ -424,7 +431,7 @@ def generate_latex_tables():
 
     # Define a file for the main output (all tables)
     main_output_file = "experiment1_results.tex"
-    destination = os.path.join(plot_dir, main_output_file)
+    destination = os.path.join(PLOT_DIR, main_output_file)
 
     # Delete the file if it already exists
     if os.path.exists(destination):
@@ -458,26 +465,61 @@ def generate_latex_tables():
             f.write(desc_table)
             f.write(equals_table)
 
-    # Split the dataframe on collation, keep only the interesting ones?
-    # fun_collations = [
-    #     "utf8mb4_0900_ai_ci",
-    #     "utf8mb4_icu_en_US_ai_ci",
-    #     "utf8mb4_zh_0900_as_cs",
-    #     "utf8mb4_icu_zh_Hans_as_cs",
-    # ]
-    # fun_locales = ["en_US", "zh_Hans"]
-    # sub_df = df[df["Collation"].isin(fun_collations)]
-    # sub_df = sub_df[sub_df["Locale"].isin(fun_locales)]
-    # # Sort by configuration, locale, collation
-    # sub_df = sub_df.sort_values(by=["Configuration", "Locale", "Collation"])
-    # asc = filter_asc_table(sub_df)
 
-    # Notes for label:
-    # Execution time: Lower is better
-    # Std. dev.: Lower is better
-    # Diff. from baseline: Lower is better
-    # Locale is data set locale
+def generate_size_comparison_table():
+    """Generate a small table which shows the effect of differently sized data sets."""
+
+    def get_size_comparison_data():
+        """Read raw data from SQLite into a dataframe."""
+        # Connect to the database
+        conn = sqlite3.connect("../final_results.db")
+        query = """
+        SELECT collation, ICU_FROZEN, ICU_EXTRA_TAILORING, locale, data_size,
+          (AVG(order_by_asc) *  100000) / data_size AS avg_order_by
+        FROM benchmarks 
+        GROUP BY  collation, ICU_FROZEN, ICU_EXTRA_TAILORING, locale, data_size
+        ORDER BY avg_order_by ASC;
+        """
+        df = pd.read_sql_query(query, conn)
+        df[ICU_CONFIG] = df.apply(identify_icu_config, axis=1)
+
+        # Drop the ICU_FROZEN and ICU_EXTRA_TAILORING columns
+        df = df.drop(columns=["ICU_FROZEN", "ICU_EXTRA_TAILORING"])
+        return df
+
+    df = get_size_comparison_data()
+
+    # Transform 'data_size' to represent thousands for readability
+    df["data_size"] = (df["data_size"] / 1000).round().astype(int)
+
+    # Get unique values from 'data_size' column and sort them
+    categories = sorted(df["data_size"].unique())
+
+    # Convert the data_size column to categorical so it will maintain the order
+    df["data_size"] = pd.Categorical(
+        df["data_size"], categories=categories, ordered=True
+    )
+
+    # Create a bar plot for median with error bars representing std
+    plt.figure(figsize=(10, 6))
+    sns.barplot(
+        x="data_size", y="avg_order_by", data=df, estimator=np.median, **PLOT_PARAMS
+    )
+
+    plt.xlabel("Size of data set (in thousands)")
+    plt.ylabel("Execution time (s)")
+    plt.title("Median execution time per 100K rows")
+
+    # Save the plot to the file
+    destination = os.path.join(
+        PLOT_DIR,
+        "size_comparison.png",
+    )
+    plt.savefig(destination)
+    plt.close()
 
 
 create_plots()
 generate_latex_tables()
+
+generate_size_comparison_table()

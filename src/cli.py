@@ -155,10 +155,15 @@ def validate(port1: int, port2: int, collation1: str, collation2: str):
 
     connection1 = Connector(port=port1)
     connection2 = Connector(port=port2)
-    validate_collations(connection1, connection2, collation1, collation2)
+    success = validate_collations(connection1, connection2, collation1, collation2)
 
     connection1.close()
     connection2.close()
+    log.info(f"Validity test success: {success}")
+    if success:
+        log.info(f"The collations are equivalent.")
+    else:
+        log.info(f"The collations are not equivalent.")
 
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ mysql-server
 
 # MySQL data folder (generated locally)
 mysql-data
+mysql-data-alt
 
 # MySQL builds (compiled locally)
 debug-build

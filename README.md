@@ -245,10 +245,43 @@ results. This is done by compiling two versions of the MySQL server, one with
 the original collation and one with the new collation, and then running a set
 of queries on both servers and comparing the results.
 
+Example usages of the test:
+
 ```bash
 # Compare the ICU and MySQL versions of the same collation (will fail, as they differ):
 cli validate -p1 3306 -p2 3306 -c1 "utf8mb4_icu_nb_NO_ai_ci" -c2 "utf8mb4_nb_0900_ai_ci"
 
 # Compare the same ICU collation on different builds of MySQL:
 cli validate -p1 3306 -p2 3307 -c1 "utf8mb4_icu_nb_NO_ai_ci" -c2 "utf8mb4_icu_nb_NO_ai_ci"
+```
+
+The two MySQL servers need to be running with separate ports, socket files and data directories.
+Instructions for running all the validation tests, i.e. "experiment 3":
+
+```bash
+# Run servers
+~/mysql/build-frozen/runtime_output_directory/mysqld \
+--datadir=/home/lv123/mysql/mysql-data \
+--port=3306 \
+--mysqlx-port=33061 \
+--mysqlx-socket=/tmp/mysqlx1.sock \
+--socket=/tmp/mysql1.sock
+
+
+~/mysql/build-locale/runtime_output_directory/mysqld \
+--datadir=/home/lv123/mysql/mysql-data-alt \
+--port=3307 \
+--mysqlx-port=33062 \
+--mysqlx-socket=/tmp/mysqlx2.sock \
+--socket=/tmp/mysql2.sock
+
+# Run clients
+~/mysql/build-frozen/runtime_output_directory/mysql -uroot -P3306 \
+--socket=/tmp/mysql1.sock
+
+~/mysql/build-locale/runtime_output_directory/mysql -uroot -P3307 \
+--socket=/tmp/mysql2.sock
+
+# Run the experiments
+bash ~/mysql/src/experiment3.sh
 ```
