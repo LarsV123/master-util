@@ -50,6 +50,13 @@ def init():
     log.debug("Database initialized.")
 
 
+def count_results():
+    """Count the number of results in the database."""
+    db = sqlite3.connect(DATABASE_FILE)
+    query = "SELECT COUNT(*) FROM benchmarks;"
+    return db.execute(query).fetchone()[0]
+
+
 def log_benchmark(result: dict):
     """Log an experiment result to the database."""
     db = sqlite3.connect(DATABASE_FILE)

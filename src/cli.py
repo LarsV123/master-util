@@ -3,7 +3,7 @@ import logging
 from utils.custom_logger import log
 from db import Connector
 from utils.initialize import prepare_performance_benchmarks, prepare_validity_tests
-from benchmarks import performance_benchmark, report_results
+from benchmarks import performance_benchmark, print_results
 import utils.experiment_logger as experiment_logger
 from experiment2 import load_test
 from validation import validate_collations
@@ -124,7 +124,7 @@ def perf(iterations: int, reset: bool, mysql: bool):
 @cli.command()
 def report():
     """Report results from performance benchmarks."""
-    report_results()
+    print_results()
 
 
 @cli.command()
@@ -161,9 +161,9 @@ def validate(port1: int, port2: int, collation1: str, collation2: str):
     connection2.close()
     log.info(f"Validity test success: {success}")
     if success:
-        log.info(f"The collations are equivalent.")
+        log.info("The collations are equivalent.")
     else:
-        log.info(f"The collations are not equivalent.")
+        log.info("The collations are not equivalent.")
 
 
 if __name__ == "__main__":

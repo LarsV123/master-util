@@ -150,10 +150,12 @@ def performance_benchmark(
 
     pbar.close()
     conn.close()
-    report_results()
+
+    total_results = experiment_logger.count_results()
+    log.info(f"Total number of results logged: {total_results}")
 
 
-def report_results():
+def print_results():
     """Print the results of the performance benchmark."""
     print("All results (aggregated):")
     print("*" * 80)
