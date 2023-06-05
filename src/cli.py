@@ -132,6 +132,9 @@ def report():
     """Report results from performance benchmarks."""
     print_results()
 
+    total_results = experiment_logger.count_results()
+    log.info(f"Total number of results logged: {total_results}")
+
 
 @cli.command()
 @click.option(
