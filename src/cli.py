@@ -1,5 +1,6 @@
 import click
 import logging
+import os
 from utils.custom_logger import log
 from db import Connector
 from utils.initialize import prepare_performance_benchmarks, prepare_validity_tests
@@ -180,6 +181,24 @@ def validate(port1: int, port2: int, collation1: str, collation2: str):
         log.info("The collations are equivalent.")
     else:
         log.info("The collations are not equivalent.")
+
+
+@cli.command()
+def sizes():
+    """Report on the table size for all test tables in the MySQL server."""
+
+    log.info("Reporting on table sizes...")
+    db = Connector()
+
+    sql_file_path = os.path.expanduser("~/mysql/src/utils/sql/table_sizes.sql")
+    log.debug(f"{sql_file_path=}")
+
+    with open(sql_file_path) as f:
+        query = f.read()
+        result = db.cursor.execute(query)
+        data = db.cursor.fetchall()
+    headers = ["Table", "Size in MiB"]
+    print(tabulate(data, headers=headers, tablefmt="mysql"))
 
 
 if __name__ == "__main__":
