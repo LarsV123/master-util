@@ -28,7 +28,7 @@ PLOT_DIR = os.path.join("..", "results", "experiment1")
 # Define common parameters for all plots
 plt.rc("font", size=14)  # controls default text sizes
 plt.rc("axes", titlesize=20)  # fontsize of the axes title
-plt.rc("axes", labelsize=16)  # fontsize of the x and y labels
+plt.rc("axes", labelsize=18)  # fontsize of the x and y labels
 plt.rc("xtick", labelsize=14)  # fontsize of the tick labels
 plt.rc("ytick", labelsize=14)  # fontsize of the tick labels
 plt.rc("legend", fontsize=14)  # legend fontsize
@@ -507,7 +507,7 @@ def generate_size_comparison_table():
     )
 
     plt.xlabel("Size of data set (in thousands)")
-    plt.ylabel("Execution time (s)")
+    plt.ylabel("Time (s)")
     plt.title("Median execution time per 100K rows")
 
     # Save the plot to the file
