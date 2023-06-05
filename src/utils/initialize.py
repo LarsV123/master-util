@@ -9,7 +9,9 @@ import pandas as pd
 from pathlib import Path
 from db import Connector
 from utils.custom_logger import log
+from utils.extract_tailorings import extract_and_split_strings
 from tqdm import tqdm
+import itertools
 
 
 LOCALES = ["en_US", "zh_Hans", "fr_FR", "nb_NO", "ja_JP"]
@@ -50,7 +52,7 @@ def prepare_validity_tests():
     """
     conn = Connector()
     log.info("Preparing test data for validity tests...")
-    create_unicode_table(conn)
+    # create_unicode_table(conn)
     create_sample_strings_table(conn)
     conn.close()
     log.info("Finished preparing test data for validity tests.")
@@ -212,11 +214,21 @@ def create_sample_strings_table(conn: Connector):
     For the purposes of this test, this is just a list of 2-character
     permutations of the Latin alphabet.
     """
-    alphabet = "abcdefghijklmnopqrstuvwxyz"
-    strings = []
-    for i in alphabet:
-        for j in alphabet:
-            strings.append(i + j)
+    # Start with all strings extracted from our tailoring file
+    strings = extract_and_split_strings()
+
+    # Define the alphabet for lower case and upper case
+    alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    # Add all 2-character permutations of the alphabet
+    permutations = ["".join(p) for p in itertools.product(alphabet, repeat=2)]
+    strings.extend(permutations)
+
+    # Remove all single characters (we already have those)
+    strings = [s for s in strings if len(s) > 1]
+
+    # Remove duplicates
+    strings = list(set(strings))
 
     table = "sample_strings"
     log.debug(f"Dropping table {table} if it already exists")
@@ -227,8 +239,7 @@ def create_sample_strings_table(conn: Connector):
     statement = f"""
     -- sql
     CREATE TABLE {table} (
-    string VARCHAR(64) NOT NULL,
-    PRIMARY KEY(string)
+    string VARCHAR(64) NOT NULL
     );
     """
     conn.cursor.execute(statement)
@@ -236,5 +247,9 @@ def create_sample_strings_table(conn: Connector):
     log.info(f"Inserting {len(strings)} sample strings into the database...")
     statement = f"INSERT INTO {table} (string) VALUES (%s);"
     for s in tqdm(strings):
-        conn.cursor.execute(statement, (s,))
+        try:
+            conn.cursor.execute(statement, (s,))
+        except Exception as e:
+            # Ignore duplicate key errors
+            tqdm.write(f"Failed to insert {s}: {e}")
     conn.connection.commit()
