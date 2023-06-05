@@ -7,6 +7,7 @@ from benchmarks import performance_benchmark, print_results
 import utils.experiment_logger as experiment_logger
 from experiment2 import load_test
 from validation import validate_collations
+from tabulate import tabulate
 
 
 @click.group()
@@ -130,10 +131,16 @@ def perf(iterations: int, reset: bool, mysql: bool):
 @cli.command()
 def report():
     """Report results from performance benchmarks."""
+    log.info("Reporting results from performance benchmarks...")
     print_results()
 
     total_results = experiment_logger.count_results()
     log.info(f"Total number of results logged: {total_results}")
+
+    log.info("Summary of results by configuration:")
+    summary = experiment_logger.summarize_results()
+    headers = ["Configuration", "Count", "Avg. ASC", "Avg. DESC", "Avg. EQUALS"]
+    print(tabulate(summary, headers=headers, tablefmt="mysql"))
 
 
 @cli.command()
