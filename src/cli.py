@@ -195,7 +195,7 @@ def sizes():
 
     with open(sql_file_path) as f:
         query = f.read()
-        result = db.cursor.execute(query)
+        db.cursor.execute(query)
         data = db.cursor.fetchall()
     headers = ["Table", "Size in MiB"]
     print(tabulate(data, headers=headers, tablefmt="mysql"))
