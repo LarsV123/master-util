@@ -85,7 +85,11 @@ def init(perf: bool, valid: bool):
 
 @cli.command()
 @click.option(
-    "-i", "--iterations", required=True, help="Number of times to run the test."
+    "-i",
+    "--iterations",
+    required=True,
+    type=int,
+    help="Number of times to run the test.",
 )
 @click.option(
     "-r",
