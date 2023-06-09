@@ -1,7 +1,6 @@
 """
 This file is used for creating plots/graphs/tables from the performance benchmark.
-Copy the SQLite database from the test bench computer and rename it to
-"final_results.db" before running this file.
+Copy the SQLite database from the test bench computer before running this file.
 
 Debugging tricks:
 # pd.set_option("display.max_columns", None)
@@ -17,6 +16,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tabulate import tabulate
+
+# Relative path to experiments.db
+DB_PATH = os.path.join("..", "experiments.db")
 
 # Column name for the build configuration tested
 ICU_CONFIG = "Collation system"
@@ -56,7 +58,7 @@ def parse_data() -> pd.DataFrame:
     """Parse the data from the SQLite database and return a dataframe."""
 
     # Connect to the database
-    conn = sqlite3.connect("../final_results.db")
+    conn = sqlite3.connect(DB_PATH)
 
     # Fetch the data from the SQLite database
     query = "SELECT * FROM benchmarks"
@@ -472,7 +474,7 @@ def generate_size_comparison_table():
     def get_size_comparison_data():
         """Read raw data from SQLite into a dataframe."""
         # Connect to the database
-        conn = sqlite3.connect("../final_results.db")
+        conn = sqlite3.connect(DB_PATH)
         query = """
         SELECT collation, ICU_FROZEN, ICU_EXTRA_TAILORING, locale, data_size,
           (AVG(order_by_asc) *  100000) / data_size AS avg_order_by
